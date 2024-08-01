@@ -1,26 +1,24 @@
 import React from 'react';
-import logo from '../../assets/img/logo.svg';
-import Greetings from '../../containers/Greetings/Greetings';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import './Popup.css';
+import SnippetList from './SnippetList';
+import AddSnippet from './AddSnippet';
+import ViewSnippet from './ViewSnippet';
+import { SnippetProvider } from './SnippetContext';
 
 const Popup = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/pages/Popup/Popup.jsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React!
-        </a>
-      </header>
-    </div>
+    <SnippetProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<SnippetList />} />
+            <Route path="/add" element={<AddSnippet />} />
+            <Route path="/view/:snippetId" element={<ViewSnippet />} />
+          </Routes>
+        </div>
+      </Router>
+    </SnippetProvider>
   );
 };
 

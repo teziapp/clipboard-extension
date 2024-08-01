@@ -1,0 +1,55 @@
+.snippet-list {
+    padding: 16px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.header h1 {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.add-button {
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #4285f4;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.snippets-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.snippet-item {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.snippet-content {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.snippet-tags {
+    font-size: 12px;
+    color: #666;
+}
