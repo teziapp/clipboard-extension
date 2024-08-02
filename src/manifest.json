@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Clipboard extension",
-  "description": "A chrome extension boilerplate built with React 17, Webpack 5, and Webpack Dev Server 4",
+  "name": "FinFriend",
+  "description": "Tool to help make the world of Financial Managers easy.",
   "options_page": "options.html",
-  "background`": {
+  "background": {
     "service_worker": "background.bundle.js"
   },
   "action": {
