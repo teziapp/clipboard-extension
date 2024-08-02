@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 
 const TagManager = () => {
-  const { tags, updateTag, deleteTag, addTag, loadTags } = useSnippets();
+  const { tags, updateTag, deleteTag, addTag, loadTags, isDarkMode } = useSnippets();
   const [newTag, setNewTag] = useState('');
   const [editingTag, setEditingTag] = useState(null);
   const [error, setError] = useState('');
@@ -54,12 +54,12 @@ const TagManager = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-4">
+    <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} rounded-lg shadow p-4 mb-4`}>
       <h4 className="text-lg font-semibold mb-3">Manage Tags</h4>
-      {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+      {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {tags.map((tag) => (
-          <div key={tag.name} className="flex items-center space-x-2 bg-gray-100 p-2 rounded">
+          <div key={tag.name} className={`flex items-center space-x-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} p-2 rounded`}>
             <input
               type="color"
               value={tag.color}
@@ -72,7 +72,7 @@ const TagManager = () => {
                 value={tag.name}
                 onChange={(e) => handleEditTag(tag, e.target.value)}
                 onBlur={() => setEditingTag(null)}
-                className="flex-grow p-1 border rounded"
+                className={`flex-grow p-1 border rounded ${isDarkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-800'}`}
                 autoFocus
               />
             ) : (
@@ -86,12 +86,16 @@ const TagManager = () => {
             <button
               onClick={() => updateTag({ ...tag, isDefault: !tag.isDefault })}
               className={`px-2 py-1 rounded text-xs ${
-                tag.isDefault ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
+                tag.isDefault 
+                  ? 'bg-blue-600 text-white' 
+                  : isDarkMode 
+                    ? 'bg-gray-600 text-gray-300' 
+                    : 'bg-gray-200 text-gray-700'
               }`}
             >
               {tag.isDefault ? 'Default' : 'Set Default'}
             </button>
-            <button onClick={() => handleDeleteTag(tag.name)} className="text-red-500 hover:text-red-700">
+            <button onClick={() => handleDeleteTag(tag.name)} className="text-red-400 hover:text-red-300">
               ×
             </button>
           </div>
@@ -103,11 +107,13 @@ const TagManager = () => {
           value={newTag}
           onChange={(e) => setNewTag(e.target.value)}
           placeholder="New tag"
-          className="flex-grow p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`flex-grow p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'
+          }`}
         />
         <button
           onClick={handleAddTag}
-          className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 transition duration-200"
+          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700 transition duration-200"
         >
           Add
         </button>
@@ -115,18 +121,20 @@ const TagManager = () => {
 
       {confirmDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
+          <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} p-4 rounded-lg shadow-lg`}>
             <p className="mb-4">Are you sure you want to delete the tag "{confirmDelete}"? This will remove it from all attached snippets.</p>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                className={`px-4 py-2 rounded ${
+                  isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteTag}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Delete
               </button>

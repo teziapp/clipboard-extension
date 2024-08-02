@@ -7,7 +7,10 @@ export const useSnippets = () => useContext(SnippetContext);
 export const SnippetProvider = ({ children }) => {
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedMode = localStorage.getItem('darkMode');
+        return savedMode ? JSON.parse(savedMode) : false;
+    });
 
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
@@ -95,8 +98,16 @@ export const SnippetProvider = ({ children }) => {
     };
 
     const toggleDarkMode = () => {
-        setIsDarkMode(prev => !prev);
+        setIsDarkMode(prevMode => {
+            const newMode = !prevMode;
+            localStorage.setItem('darkMode', JSON.stringify(newMode));
+            return newMode;
+        });
     };
+
+    useEffect(() => {
+        localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    }, [isDarkMode]);
 
     return (
         <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode }}>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
 
 const SnippetList = () => {
-    const { snippets, tags } = useSnippets();
+    const { snippets, tags, isDarkMode } = useSnippets();
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
@@ -28,11 +28,11 @@ const SnippetList = () => {
     };
 
     return (
-        <div className="w-full h-full font-sans bg-gray-100 flex flex-col">
+        <div className={`w-full h-full font-sans ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
             <div className="flex justify-between items-center p-4">
-                <h1 className="text-xl font-semibold text-gray-800">Snippets</h1>
+                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Snippets</h1>
                 <button
-                    className="text-blue-500 hover:text-blue-600"
+                    className={`${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
                     onClick={() => navigate('/add')}
                 >
                     <Plus size={24} />
@@ -42,7 +42,7 @@ const SnippetList = () => {
                 <input
                     type="text"
                     placeholder="Search snippets"
-                    className="w-full p-3 rounded-lg bg-gray-200 text-gray-700"
+                    className={`w-full p-3 rounded-lg ${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-200 text-gray-700'}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -52,10 +52,10 @@ const SnippetList = () => {
                     filteredSnippets.map((snippet) => (
                         <div 
                             key={snippet.id} 
-                            className="bg-white rounded-lg p-4 mb-4 relative shadow cursor-pointer"
+                            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 mb-4 relative shadow cursor-pointer`}
                             onClick={() => handleSnippetClick(snippet.id)}
                         >
-                            <div className="text-sm text-gray-700 mb-2 leading-relaxed">{snippet.content}</div>
+                            <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2 leading-relaxed`}>{snippet.content}</div>
                             <div className="flex justify-between items-center text-xs text-gray-500">
                                 <div className="flex flex-wrap gap-1">
                                     {snippet.tags.map((tagName, index) => {
@@ -64,7 +64,10 @@ const SnippetList = () => {
                                             <span 
                                                 key={index} 
                                                 className="px-2 py-1 rounded" 
-                                                style={{ backgroundColor: tagInfo ? tagInfo.color : '#e2e8f0', color: tagInfo ? getContrastColor(tagInfo.color) : '#1a202c' }}
+                                                style={{ 
+                                                    backgroundColor: tagInfo ? tagInfo.color : (isDarkMode ? '#4a5568' : '#e2e8f0'), 
+                                                    color: tagInfo ? getContrastColor(tagInfo.color) : (isDarkMode ? '#e2e8f0' : '#1a202c') 
+                                                }}
                                             >
                                                 {tagName}
                                             </span>
@@ -73,7 +76,7 @@ const SnippetList = () => {
                                 </div>
                             </div>
                             <button
-                                className="absolute top-4 right-4 text-gray-400 hover:text-blue-500"
+                                className={`absolute top-4 right-4 ${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-400 hover:text-blue-500'}`}
                                 onClick={() => copyToClipboard(snippet.content)}
                             >
                                 <Clipboard size={16} />
@@ -81,10 +84,10 @@ const SnippetList = () => {
                         </div>
                     ))
                 ) : searchTerm.trim() !== '' ? (
-                    <div className="bg-white rounded-lg p-4 mb-4 shadow">
-                        <p className="text-gray-700 mb-2">No snippets found for "{searchTerm}"</p>
+                    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 mb-4 shadow`}>
+                        <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>No snippets found for "{searchTerm}"</p>
                         <button
-                            className="flex items-center text-blue-500 hover:text-blue-600"
+                            className={`flex items-center ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
                             onClick={handleAddNewSnippet}
                         >
                             <Plus size={16} className="mr-1" />
@@ -92,8 +95,8 @@ const SnippetList = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg p-4 mb-4 shadow">
-                        <p className="text-gray-700">No Snippets Available.</p>
+                    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 mb-4 shadow`}>
+                        <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No Snippets Available.</p>
                     </div>
                 )}
             </div>

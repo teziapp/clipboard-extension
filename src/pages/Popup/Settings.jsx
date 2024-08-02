@@ -28,7 +28,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="p-4 bg-white h-full flex flex-col overflow-y-auto">
+    <div className={`p-4 h-full flex flex-col overflow-y-auto ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
       <div className="flex items-center mb-4">
         <button className="mr-2 text-2xl" onClick={() => navigate('/')}>←</button>
         <h2 className="text-xl font-semibold">Settings</h2>
@@ -51,7 +51,7 @@ const Settings = () => {
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Other settings</h3>
       <button
-        className="w-full py-2 bg-gray-200 text-gray-800 rounded-lg"
+        className={`w-full py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-800'}`}
         onClick={toggleDarkMode}
       >
         {isDarkMode ? 'Light mode' : 'Dark mode'}
