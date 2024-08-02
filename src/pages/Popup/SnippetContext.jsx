@@ -78,13 +78,14 @@ export const SnippetProvider = ({ children }) => {
     };
 
     const exportData = () => {
-        const data = JSON.stringify({ snippets, tags });
-        const blob = new Blob([data], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'snippets_export.csv';
-        a.click();
+        const snippets = JSON.parse(localStorage.getItem('snippets') || '[]');
+        console.log('Snippets data:', snippets);
+        const csvContent = snippets.map(snippet => {
+            const text = snippet.content ?? '';
+            const tags = Array.isArray(snippet.tags) ? snippet.tags.join('::') : '';
+            return `"${text}","${tags}"`;
+        }).join('\n');
+        return `Snippet,Tags\n${csvContent}`;
     };
 
     const importData = (csvData) => {
