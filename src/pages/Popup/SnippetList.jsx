@@ -13,9 +13,14 @@ const SnippetList = () => {
         snippet.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    const copyToClipboard = (content) => {
+    const copyToClipboard = (content, event) => {
+        event.stopPropagation(); // Prevent snippet edit navigation
         navigator.clipboard.writeText(content).then(() => {
             console.log('Copied to clipboard');
+            // Optionally, you can show a temporary success message here
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            // Optionally, you can show an error message here
         });
     };
 
@@ -77,7 +82,8 @@ const SnippetList = () => {
                             </div>
                             <button
                                 className={`absolute top-4 right-4 ${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-400 hover:text-blue-500'}`}
-                                onClick={() => copyToClipboard(snippet.content)}
+                                onClick={(e) => copyToClipboard(snippet.content, e)}
+                                aria-label="Copy to clipboard"
                             >
                                 <Clipboard size={16} />
                             </button>
