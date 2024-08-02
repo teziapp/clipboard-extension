@@ -19,22 +19,32 @@ const ImportIcon = () => (
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { exportData, importData, toggleDarkMode, isDarkMode } = useSnippets();
+  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode } = useSnippets();
   const [importError, setImportError] = useState(null);
 
   const handleExport = () => {
-    const csvContent = exportData();
+    // Create CSV content
+    const csvContent = [
+      // CSV header
+      ['Content', 'Tags', 'Created At', 'Updated At'].join(','),
+      // CSV rows
+      ...snippets.map(snippet => [
+        `"${snippet.content.replace(/"/g, '""')}"`, // Escape quotes in content
+        `"${snippet.tags.join(',')}"`, // Join tags with comma
+        snippet.createdAt,
+        snippet.updatedAt
+      ].join(','))
+    ].join('\n');
+
+    // Create and download the CSV file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'snippets.csv');
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    link.href = url;
+    link.setAttribute('download', 'snippets_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleImport = (event) => {
@@ -46,10 +56,25 @@ const Settings = () => {
           const csvData = e.target.result;
           const lines = csvData.split('\n').filter(line => line.trim() !== '');
           const importedSnippets = lines.slice(1).map(line => {
-            const [content, tags] = line.split(',').map(item => item.trim().replace(/^"|"$/g, ''));
-            return { content, tags: tags ? tags.split('::') : [] };
+            const [content, tagsString, createdAt, updatedAt] = line.split(',').map(item => item.trim().replace(/^"|"$/g, ''));
+            const snippetTags = tagsString.split(',').map(tag => tag.trim());
+            return { 
+              id: Math.random().toString(36).substr(2, 9), // Generate a new ID
+              content, 
+              tags: snippetTags,
+              createdAt: createdAt || new Date().toISOString(),
+              updatedAt: updatedAt || new Date().toISOString()
+            };
           });
-          importData(JSON.stringify({ snippets: importedSnippets }));
+
+          // Update tags
+          const newTags = new Set(tags);
+          importedSnippets.forEach(snippet => {
+            snippet.tags.forEach(tag => newTags.add(tag));
+          });
+
+          setSnippets([...snippets, ...importedSnippets]);
+          setTags(Array.from(newTags));
           setImportError(null);
         } catch (error) {
           setImportError('Invalid file format or data');
@@ -76,13 +101,13 @@ const Settings = () => {
           onClick={handleExport}
           aria-label="Export data"
         >
-          <ExportIcon />
+          <ImportIcon />
         </button>
       </div>
       <div className="flex items-center justify-between">
         <span>Import data</span>
         <label className="text-blue-500 hover:text-blue-600 cursor-pointer">
-          <ImportIcon />
+          <ExportIcon />
           <input
             type="file"
             accept=".csv"

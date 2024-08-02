@@ -1,11 +1,12 @@
 import { Clipboard, Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
 
 const SnippetList = () => {
     const { snippets, tags, isDarkMode } = useSnippets();
     const [searchTerm, setSearchTerm] = useState('');
+    const [copiedId, setCopiedId] = useState(null);
     const navigate = useNavigate();
 
     const filteredSnippets = snippets.filter(snippet =>
@@ -13,16 +14,15 @@ const SnippetList = () => {
         snippet.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    const copyToClipboard = (content, event) => {
+    const copyToClipboard = useCallback((content, snippetId, event) => {
         event.stopPropagation(); // Prevent snippet edit navigation
         navigator.clipboard.writeText(content).then(() => {
-            console.log('Copied to clipboard');
-            // Optionally, you can show a temporary success message here
+            setCopiedId(snippetId);
+            setTimeout(() => setCopiedId(null), 2000); // Hide message after 2 seconds
         }).catch(err => {
             console.error('Failed to copy: ', err);
-            // Optionally, you can show an error message here
         });
-    };
+    }, []);
 
     const handleAddNewSnippet = () => {
         navigate('/add', { state: { initialContent: searchTerm } });
@@ -82,11 +82,16 @@ const SnippetList = () => {
                             </div>
                             <button
                                 className={`absolute top-4 right-4 ${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-400 hover:text-blue-500'}`}
-                                onClick={(e) => copyToClipboard(snippet.content, e)}
+                                onClick={(e) => copyToClipboard(snippet.content, snippet.id, e)}
                                 aria-label="Copy to clipboard"
                             >
                                 <Clipboard size={16} />
                             </button>
+                            {copiedId === snippet.id && (
+                                <div className={`absolute top-4 right-12 px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}`}>
+                                    Copied!
+                                </div>
+                            )}
                         </div>
                     ))
                 ) : searchTerm.trim() !== '' ? (
