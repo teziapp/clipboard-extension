@@ -7,6 +7,7 @@ const SnippetList = () => {
     const { snippets, tags, isDarkMode } = useSnippets();
     const [searchTerm, setSearchTerm] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [isAnimating, setIsAnimating] = useState(false);
     const navigate = useNavigate();
 
     const filteredSnippets = snippets.filter(snippet =>
@@ -18,7 +19,11 @@ const SnippetList = () => {
         event.stopPropagation(); // Prevent snippet edit navigation
         navigator.clipboard.writeText(content).then(() => {
             setCopiedId(snippetId);
-            setTimeout(() => setCopiedId(null), 2000); // Hide message after 2 seconds
+            setIsAnimating(true);
+            setTimeout(() => {
+                setIsAnimating(false);
+                setCopiedId(null);
+            }, 1000); // Animation duration
         }).catch(err => {
             console.error('Failed to copy: ', err);
         });
@@ -88,7 +93,14 @@ const SnippetList = () => {
                                 <Clipboard size={16} />
                             </button>
                             {copiedId === snippet.id && (
-                                <div className={`absolute top-4 right-12 px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}`}>
+                                <div 
+                                    className={`
+                                        absolute top-4 right-12 px-2 py-1 text-xs rounded 
+                                        ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}
+                                        transition-all duration-300 ease-in-out
+                                        ${isAnimating ? 'scale-110' : 'scale-100'}
+                                    `}
+                                >
                                     Copied!
                                 </div>
                             )}
