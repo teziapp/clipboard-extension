@@ -7,7 +7,11 @@ import { SnippetProvider, useSnippets } from './SnippetContext';
 import SnippetList from './SnippetList';
 import TagManager from './TagManager';
 
+
+
+
 const Popup = () => {
+
   return (
     <SnippetProvider>
       <PopupContent />
@@ -17,6 +21,7 @@ const Popup = () => {
 
 const PopupContent = () => {
   const { isDarkMode } = useSnippets();
+
   return (
     <Router>
       <div className={`w-[300px] h-[500px] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow-md flex flex-col`}>

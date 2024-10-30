@@ -1,0 +1,9 @@
+td:hover .note-down {
+    display: inline-block;
+    z-index: 1000;
+}
+
+.note-down {
+    margin-left: 10px;
+    display: none;
+}
