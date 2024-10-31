@@ -27,10 +27,10 @@ fetch('https://script.google.com/macros/s/AKfycbxJPjCcowBQS124lLZfmw1ItprLtxNx7M
 
 chrome.runtime.onMessage.addListener((message, sender, sendRes) => {
     if (!message.msg) return
-    onClickHandler(message.msg)
+    onSymbolMessage(message.msg)
 })
 
-function onClickHandler(clickedSymbol) {
+function onSymbolMessage(clickedSymbol) {
 
     if (!symbolData) return;
 
