@@ -41,7 +41,7 @@ document.querySelectorAll('td').forEach((i) => {
 
     }
 
-    i.insertBefore(button, anchor.nextSibling)
+    i.appendChild(button)
 })
 
 console.log('now how abt thisss')
