@@ -28,9 +28,7 @@ document.querySelectorAll('td').forEach((i) => {
         e.preventDefault()
         const clickedSymbol = anchor.textContent.toLocaleLowerCase().replace(/[ .]/g, "")
 
-        chrome.runtime.sendMessage({ msg: clickedSymbol }, () => {
-
-        })
+        chrome.runtime.sendMessage({ msg: clickedSymbol }).then(() => console.log('messageSent : ', clickedSymbol))
 
     }
 
