@@ -24,8 +24,17 @@ document.querySelectorAll('td').forEach((i) => {
     const button = document.createElement('button')
     button.className = 'note-down'
     button.textContent = '+'
+    button.style.cssText = `
+                        margin-left: 10px;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        border: 1px solid #ccc;
+                        cursor: pointer;
+                        background: white;
+                    `;
     button.onclick = (e) => {
         e.preventDefault()
+        e.stopPropagation()
         const clickedSymbol = anchor.textContent.toLocaleLowerCase().replace(/[ .]/g, "")
 
         chrome.runtime.sendMessage({ msg: clickedSymbol }).then(() => console.log('messageSent : ', clickedSymbol))
