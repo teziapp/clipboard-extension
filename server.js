@@ -1,3 +1,5 @@
-const { closest, distance } = require('fastest-levenshtein')
+async function func() {
+    return 5
+}
 
-console.log(closest('herwehaveacat', ['wehavecat', 'hereacat']))
+func().then((val) => console.log(val))

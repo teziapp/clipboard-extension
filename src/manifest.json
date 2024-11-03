@@ -6,6 +6,7 @@
     "service_worker": "background.bundle.js"
   },
   "permissions": [
+    "identity",
     "scripting",
     "storage"
   ],
@@ -43,5 +44,11 @@
         "<all_urls>"
       ]
     }
-  ]
+  ],
+  "oauth2": {
+    "client_id": "650198074640-t2ebl9o4206gsk7jggbvoqr7mp530ab2.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets"
+    ]
+  }
 }

@@ -1,8 +1,5 @@
 import { printLine } from './modules/print';
 
-
-
-
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
 
@@ -24,6 +21,8 @@ button.style.cssText = `
     cursor: pointer;
     background: rgb(0, 0, 0);
     z-index: 1000`
+
+button.classList.add('hide-btn')
 
 document.body.appendChild(button)
 
