@@ -26,13 +26,15 @@ const PopupContent = () => {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
-  // const isFirstTimeUser = useRef(false)
 
-  useEffect(() => {      //EDGE-CASE : need to consider synchronization between bg.Script setting userCred value and this one here reading it 
+  //useRffect will check wether it's a first time user of not by looking for: "is the value of sheetId already present in local storage of not" 
+  // and from that it will be decided which page to render as the default route path '/'
+
+
+  useEffect(() => {
     console.log('useEffect ran')
 
     chrome.storage.local.get(['userCreds']).then((res) => {
-      console.log('res with: ', res.userCreds.sheetId)
       setIsLoading(false)
       !res.userCreds.sheetId ? setIsFirstTimeUser(true) : null
     }).catch((rej) => {
@@ -40,7 +42,7 @@ const PopupContent = () => {
     })
 
   }, [isFirstTimeUser])
-
+  //EDGE-CASE : need to consider synchronization between bg.Script setting userCred value and this one here reading it 
 
 
   return isLoading ? <InitialLoading></InitialLoading> : (
@@ -58,7 +60,7 @@ const PopupContent = () => {
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
-        {!localStorage.getItem('userCreds') ? null : <Navbar isDarkMode={isDarkMode} />}
+        {!isFirstTimeUser ? <Navbar isDarkMode={isDarkMode} /> : null}
       </div>
     </Router>
   );

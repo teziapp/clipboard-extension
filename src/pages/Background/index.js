@@ -4,54 +4,27 @@ import { InitialUserSetup } from './modules/InitialUserSetup';
 
 console.log('This is the background page.');
 
-console.log('Put the background scripts here.');
 
-console.log('new line by hamza');
-
+//When extension is installed first it will popup a login and consent approval window
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.identity.getAuthToken({
-        interactive: true
-    }, (token) => {
-        // chrome.storage.local.set/get both are aynchronous but is callback is passed as argument then u can't handle the resolved value through then/catch.. so either then/catch or callBack handler! 
-
-        chrome.storage.local.get(['userCreds'], (val) => {
-            chrome.storage.local.set({
-                'userCreds': {
-                    ...val.userCreds,
-                    token: token
-                }
-            }, () => {
-                console.log('set initially')
-            })
-        })
-
-
-
-
-        console.log(token)
-        // chrome.storage.local.set({ 'token': token }, (i) => {
-        //     console.log('done: ', i)
-        // })
-    })
+    chrome.storage.local.set({ 'userCreds': {} })
 })
 
 
-
+//for every event message triggered from UI, this will the main handling function
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.msg) {
         case 'InitialUserSetup':
             InitialUserSetup(message.payload).then((res) => {
-                sendResponse("ok") // to let the sender know 
+                if (!res) return
+                sendResponse("ok") // to let the sender know that initialSetup is complete and it can load the UI home page
             })
     }
     return true
 })
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status == 'complete') {
-        console.log(tabId, ' : changed')
-    }
-})
+//Below is the code for calculating nearest matching symbol from the Symbol value obtained from contentScrip message
+//CODE WAS WORKING FINE IN PREVIOUS PR-commit, BUT..Ignore everything below for now..
 
 // let symbolData;
 
