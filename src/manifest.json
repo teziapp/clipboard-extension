@@ -5,6 +5,15 @@
   "background": {
     "service_worker": "background.bundle.js"
   },
+  "permissions": [
+    "notifications",
+    "identity",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://script.google.com/macros/s/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon-34.png"
@@ -14,7 +23,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "js": [
         "contentScript.bundle.js"
       ],
@@ -30,7 +41,15 @@
         "icon-128.png",
         "icon-34.png"
       ],
-      "matches": []
+      "matches": [
+        "<all_urls>"
+      ]
     }
-  ]
+  ],
+  "oauth2": {
+    "client_id": "650198074640-t2ebl9o4206gsk7jggbvoqr7mp530ab2.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets"
+    ]
+  }
 }
