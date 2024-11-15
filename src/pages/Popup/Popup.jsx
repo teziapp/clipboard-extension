@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import AddOrEditSnippet from './AddOrEditSnippet';
 import Navbar from './Navbar';
@@ -6,17 +6,23 @@ import Settings from './Settings';
 import { SnippetProvider, useSnippets } from './SnippetContext';
 import SnippetList from './SnippetList';
 import TagManager from './TagManager';
+import NoteList from './NoteList';
+import ActiveNotes from './ActiveNotes';
 
 const Popup = () => {
   return (
     <SnippetProvider>
+
       <PopupContent />
+
     </SnippetProvider>
   );
 };
 
 const PopupContent = () => {
   const { isDarkMode } = useSnippets();
+
+
   return (
     <Router>
       <div className={`w-[300px] h-[500px] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow-md flex flex-col`}>
@@ -27,6 +33,8 @@ const PopupContent = () => {
             <Route path="/edit/:snippetId" element={<AddOrEditSnippet />} />
             <Route path="/tags" element={<TagManager />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path='/noteList' element={<NoteList></NoteList>} />
+            <Route path='/activeNotes' element={<ActiveNotes></ActiveNotes>} />
           </Routes>
         </div>
         <Navbar isDarkMode={isDarkMode} />

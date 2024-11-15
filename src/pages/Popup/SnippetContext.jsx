@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import dexieStore from '../../Dexie/DexieStore';
 
 const SnippetContext = createContext();
 
 export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
+    const [goToActiveNotes, setGoToActiveNotes] = useState(false)
+    const [activeSymbol, setActiveSymbol] = useState({})
+    const [notes, setNotes] = useState([])
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -12,11 +16,40 @@ export const SnippetProvider = ({ children }) => {
         return savedMode ? JSON.parse(savedMode) : false;
     });
 
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.msg == 'setActiveSymbol') {
+            setActiveSymbol(message.payload)
+            setGoToActiveNotes(p => !p)
+        }
+    })
+
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
         setSnippets(storedSnippets);
         loadTags();
+        (async () => {
+            const storedNotes = await dexieStore.getItem('notes')
+            setNotes(storedNotes)
+        })()
+
     }, []);
+
+    //Notes functions
+    const addNote = (content) => {
+        const newNote = { noteId: Date.now(), content, symId: activeSymbol.symId, date: Date.now(), title: activeSymbol.title };
+        const updatedNotes = [...notes, newNote];
+        setNotes(updatedNotes);
+        dexieStore.setItem('currentNotes', { notes: updatedNotes, activeSymbol });
+    };
+
+    const deleteNote = (noteId) => {
+        const updatedNotes = notes.filter(note => note.noteId !== noteId);
+        setNotes(updatedNotes);
+        dexieStore.setItem('currentNotes', { notes: updatedNotes, activeSymbol });
+    };
+
+
+
 
     const addSnippet = (newSnippet) => {
         const updatedSnippets = [...snippets, { ...newSnippet, id: Date.now() }];
@@ -48,7 +81,7 @@ export const SnippetProvider = ({ children }) => {
 
     const updateTag = (updatedTag) => {
         setTags(prevTags => {
-            const updatedTags = prevTags.map(tag => 
+            const updatedTags = prevTags.map(tag =>
                 tag.name === updatedTag.name ? updatedTag : tag
             );
             localStorage.setItem('tags', JSON.stringify(updatedTags));
@@ -111,7 +144,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, addNote, deleteNote, activeSymbol, setActiveSymbol, notes, goToActiveNotes }}>
             {children}
         </SnippetContext.Provider>
     );
