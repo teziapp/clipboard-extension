@@ -23,5 +23,4 @@
 # secrets
 secrets.*.js
 
-#ignore
-/serverHomePage
+
