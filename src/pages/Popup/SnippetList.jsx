@@ -4,15 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
 
 const SnippetList = () => {
-    const { snippets, tags, isDarkMode, goToActiveNotes } = useSnippets();
+    const { snippets, tags, isDarkMode, setActiveSymbol } = useSnippets();
     const [searchTerm, setSearchTerm] = useState('');
     const [copiedId, setCopiedId] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        goToActiveNotes ? navigate('/activeNotes') : null
-    }, [])
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.msg == 'setActiveSymbol') {
+            console.log(message)
+            setActiveSymbol(message.payload)
+            navigate('/activeNotes')
+        }
+    })
 
     const filteredSnippets = snippets.filter(snippet =>
         snippet.content.toLowerCase().includes(searchTerm.toLowerCase()) ||

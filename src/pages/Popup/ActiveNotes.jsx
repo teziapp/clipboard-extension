@@ -56,9 +56,9 @@ const ActiveNotes = () => {
             </div>
 
             <div id='notes-container' className="flex-grow overflow-y-auto px-4">
-                {notes.length > 0 ? (
+                {Object.keys(groupedNotes).length > 0 ? (
                     Object.keys(groupedNotes).map((date) => {
-                        return (<div>
+                        return (<>
                             <hr className={`${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-0.2`} />
                             <span
                                 className={`block w-full text-right text-sm font-semibold mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-400'
@@ -71,11 +71,11 @@ const ActiveNotes = () => {
                                     key={note.noteId}
                                     className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 mb-4 shadow relative`}
                                 >
-                                    <div className={`overflow-auto text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <div className={`mr-3.5 overflow-auto text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         {note.content}
                                     </div>
                                     <button
-                                        className={`absolute top-4 right-4 ${isDarkMode ? 'text-gray-400 hover:text-red-400' : 'text-gray-500 hover:text-red-600'}`}
+                                        className={`absolute top-3 right-3 ${isDarkMode ? 'text-gray-400 hover:text-red-400' : 'text-gray-500 hover:text-red-600'}`}
                                         onClick={() => handleDeleteNote(note.noteId)}
                                         aria-label="Delete note"
                                     >
@@ -83,7 +83,7 @@ const ActiveNotes = () => {
                                     </button>
                                 </div>
                             ))}
-                        </div>
+                        </>
                         )
                     })
 

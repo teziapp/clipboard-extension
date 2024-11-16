@@ -30,12 +30,11 @@ const NoteList = () => {
 
     return (
         <div
-            className={`w-full h-full font-sans flex flex-col pr-1 ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-gray-900'
-                }`}
+            className={`w-full h-full font-sans flex flex-col pr-1 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}
         >
             {/* Search Bar (without functionality) */}
 
-            <div className="flex items-center mb-4 p-4 pr-2">
+            <div className={` flex items-center mb-0 p-4 pr-2`}>
                 <input
                     type="text"
                     placeholder="Search notes"
@@ -68,10 +67,9 @@ const NoteList = () => {
                                     setActiveSymbol(activeSymbol)
                                     navigate('/activeNotes')
                                 }}
-                                    key={note.id}
+                                    key={note.noteId}
                                     className={`cursor-pointer hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-                                        } p-2 mb-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
-                                        }`}
+                                        } p-2 mb-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                                 >
                                     <span className={`block font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                                         {note.title}

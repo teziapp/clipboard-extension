@@ -6,7 +6,6 @@ const SnippetContext = createContext();
 export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
-    const [goToActiveNotes, setGoToActiveNotes] = useState(false)
     const [activeSymbol, setActiveSymbol] = useState({})
     const [notes, setNotes] = useState([])
     const [snippets, setSnippets] = useState([]);
@@ -16,12 +15,7 @@ export const SnippetProvider = ({ children }) => {
         return savedMode ? JSON.parse(savedMode) : false;
     });
 
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.msg == 'setActiveSymbol') {
-            setActiveSymbol(message.payload)
-            setGoToActiveNotes(p => !p)
-        }
-    })
+
 
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
@@ -144,7 +138,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, addNote, deleteNote, activeSymbol, setActiveSymbol, notes, goToActiveNotes }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, addNote, deleteNote, activeSymbol, setActiveSymbol, notes }}>
             {children}
         </SnippetContext.Provider>
     );
