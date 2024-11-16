@@ -34,6 +34,10 @@ async function getFunc(itemName) {
             const currentNotes = await db.notes.where('symId').equals(activeSymbol.symId).toArray()
             return currentNotes
             break;
+
+        case 'symbols':
+            return await db.symbols.toArray()
+            break;
     }
 }
 
@@ -41,15 +45,6 @@ async function setFunc(itemName, payload) {
     switch (itemName) {
         case 'currentNotes':
             const { activeSymbol } = payload
-
-            // const transformedNotesArray = payload.notes.map((i) => {
-            //     return {
-            //         symId: activeSymbol.symId,
-            //         noteId: i.id,
-            //         content: i.content,
-            //         date: i.date,
-            //     }
-            // })
 
             const toBeDeletedNotes = await db.notes.where('symId').equals(activeSymbol.symId).toArray()
 
@@ -59,6 +54,34 @@ async function setFunc(itemName, payload) {
 
             await db.notes.bulkPut([...payload.notes])
             return
+            break;
+
+        case 'updateSymbol':
+            try {
+                await db.symbols.put({
+                    symId: payload.confirmedSymbol.symId,
+                    symbols: [...payload.confirmedSymbol.symbols, val.newSymbol],
+                    title: payload.confirmedSymbol.title
+                })
+            } catch (e) {
+                console.log('error for reading the value of undefined.. reading symbols..')
+            }
+            break;
+
+        case 'addNewSymbol':
+            try {
+                const addedSymbolId = await db.symbols.put({
+                    symId: undefined,
+                    symbols: [payload.symbolValue],
+                    title: payload.title
+                })
+
+                return await db.symbols.get(addedSymbolId)
+
+            } catch (e) {
+                console.log('error for reading the value of undefined.. reading symbols..')
+            }
+
             break;
     }
 }
