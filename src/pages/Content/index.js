@@ -1,9 +1,8 @@
-import { printLine } from './modules/print';
+import symbolConfirmationDialog from "./modules/symbolConfirmationDialogue";
 
 console.log('Content script works!');
-console.log('Must reload extension for modifications to take effect.');
 
-printLine("Using the 'printLine' function from the Print Module");
+
 
 let currentSymbol
 
@@ -70,3 +69,8 @@ document.querySelectorAll('td').forEach((i) => {
 
     })
 })
+
+window.addEventListener('scroll', () => {
+    document.getElementById('note-down').classList.add('hide-btn')
+})
+

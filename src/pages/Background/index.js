@@ -27,6 +27,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse(res)
             })
             break;
+        case 'symbolConfirmed':
+            symbolConfirmationHandler(message.payload).then(() => {
+                sendResponse('symbol confirmed..')
+            })
+            break;
+
+        case 'addNewSymbol':
+            addNewSymbolHandler(message.payload).then(() => {
+                sendResponse('new symbol added')
+            })
     }
     return true
 })
@@ -71,5 +81,19 @@ async function activeSymbolSetter(symbol) {
         })
     }, 200)
 
+}
+
+async function symbolConfirmationHandler(symbolData) {
+
+    await dexieStore.setItem('updateSymbol', symbolData)
+
+    console.log('updated...', symbolData.confirmedSymbol)
+    activeSymbolSetter(symbolData.confirmedSymbol)
+
+}
+
+async function addNewSymbolHandler(symbolData) {
+    const addedSymbol = await dexieStore.setItem('addNewSymbol', symbolData)
+    await activeSymbolSetter(addedSymbol)
 }
 
