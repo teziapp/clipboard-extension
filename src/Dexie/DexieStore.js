@@ -60,7 +60,7 @@ async function setFunc(itemName, payload) {
             try {
                 await db.symbols.put({
                     symId: payload.confirmedSymbol.symId,
-                    symbols: [...payload.confirmedSymbol.symbols, val.newSymbol],
+                    symbols: [...payload.confirmedSymbol.symbols, payload.newSymbol],
                     title: payload.confirmedSymbol.title
                 })
             } catch (e) {
