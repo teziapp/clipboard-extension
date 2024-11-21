@@ -60,8 +60,8 @@ const SnippetList = () => {
             <div className="flex-grow overflow-y-auto px-4">
                 {filteredSnippets.length > 0 ? (
                     filteredSnippets.map((snippet) => (
-                        <div 
-                            key={snippet.id} 
+                        <div
+                            key={snippet.id}
                             className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 mb-4 relative shadow cursor-pointer`}
                             onClick={() => handleSnippetClick(snippet.id)}
                         >
@@ -71,12 +71,12 @@ const SnippetList = () => {
                                     {snippet.tags.map((tagName, index) => {
                                         const tagInfo = tags.find(t => t.name === tagName);
                                         return (
-                                            <span 
-                                                key={index} 
-                                                className="px-2 py-1 rounded" 
-                                                style={{ 
-                                                    backgroundColor: tagInfo ? tagInfo.color : (isDarkMode ? '#4a5568' : '#e2e8f0'), 
-                                                    color: tagInfo ? getContrastColor(tagInfo.color) : (isDarkMode ? '#e2e8f0' : '#1a202c') 
+                                            <span
+                                                key={index}
+                                                className="px-2 py-1 rounded"
+                                                style={{
+                                                    backgroundColor: tagInfo ? tagInfo.color : (isDarkMode ? '#4a5568' : '#e2e8f0'),
+                                                    color: tagInfo ? getContrastColor(tagInfo.color) : (isDarkMode ? '#e2e8f0' : '#1a202c')
                                                 }}
                                             >
                                                 {tagName}
@@ -93,7 +93,7 @@ const SnippetList = () => {
                                 <Clipboard size={16} />
                             </button>
                             {copiedId === snippet.id && (
-                                <div 
+                                <div
                                     className={`
                                         absolute top-4 right-12 px-2 py-1 text-xs rounded 
                                         ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}
