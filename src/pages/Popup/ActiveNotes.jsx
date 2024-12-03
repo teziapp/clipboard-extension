@@ -2,30 +2,8 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import dexieStore from '../../Dexie/DexieStore';
-
-const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    if (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-    ) {
-        return "Today";
-    } else if (
-        date.getDate() === yesterday.getDate() &&
-        date.getMonth() === yesterday.getMonth() &&
-        date.getFullYear() === yesterday.getFullYear()
-    ) {
-        return "Yesterday";
-    } else {
-        return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-    }
-};
+import { dexieStore } from '../../Dexie/DexieStore';
+import { formatDate } from './utils/formatDate';
 
 const ActiveNotes = () => {
 
@@ -36,6 +14,7 @@ const ActiveNotes = () => {
 
     const navigate = useNavigate()
 
+    //scrolls to the bottom when the component loads initially and when new note is added 
     useEffect(() => {
         document.getElementById('notes-container').scrollTo({
             top: document.getElementById('notes-container').scrollHeight,
@@ -45,7 +24,7 @@ const ActiveNotes = () => {
 
     useEffect(() => {
         (async () => {
-            const storedActiveNotes = await dexieStore.getItem('activeNotes', activeSymbol.symId)
+            const storedActiveNotes = await dexieStore.getActiveNotes(activeSymbol.symId)
             setActiveNotes(storedActiveNotes)
         })()
     }, [activeSymbol.symId])
@@ -65,16 +44,18 @@ const ActiveNotes = () => {
 
     //Notes functions
     const addNote = (content) => {
-        const newNote = { noteId: Date.now() + 19800000, content, symId: activeSymbol.symId, date: Date.now() + 19800000, title: activeSymbol.title };
+        const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
+        console.log(localMilliseconds)
+        const newNote = { noteId: localMilliseconds, content, symId: activeSymbol.symId, date: localMilliseconds, title: activeSymbol.title };
         const updatedNotes = [...activeNotes, newNote];
         setActiveNotes(updatedNotes);
-        dexieStore.setItem('currentNotes', { notes: updatedNotes, activeSymbol });
+        dexieStore.addNote(newNote);
     };
 
     const deleteNote = (noteId) => {
         const updatedNotes = activeNotes.filter(note => note.noteId !== noteId);
         setActiveNotes(updatedNotes);
-        dexieStore.setItem('currentNotes', { notes: updatedNotes, activeSymbol });
+        dexieStore.deleteNote(noteId);
     };
 
 

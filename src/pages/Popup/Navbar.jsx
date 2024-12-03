@@ -6,6 +6,7 @@ const Navbar = () => {
   const { isDarkMode } = useSnippets()
   const location = useLocation();
 
+  //displays Navbar only current page is not ActiveNotes
   return location.pathname.includes('/activeNotes/') ? null : (
     <div className={`flex justify-around p-3 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border-t`}>
       <Link to="/" className={`flex flex-col items-center ${location.pathname === '/' ? 'text-blue-500' : isDarkMode ? 'text-gray-300' : 'text-gray-400'}`}>

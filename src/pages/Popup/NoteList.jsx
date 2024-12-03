@@ -2,30 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import dexieStore, { db } from '../../Dexie/DexieStore';
-
-const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    if (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-    ) {
-        return "Today";
-    } else if (
-        date.getDate() === yesterday.getDate() &&
-        date.getMonth() === yesterday.getMonth() &&
-        date.getFullYear() === yesterday.getFullYear()
-    ) {
-        return "Yesterday";
-    } else {
-        return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-    }
-};
+import { dexieStore } from '../../Dexie/DexieStore';
+import { formatDate } from './utils/formatDate';
 
 const NoteList = () => {
     const navigate = useNavigate()
@@ -36,8 +14,7 @@ const NoteList = () => {
     useEffect(() => {
 
         (async () => {
-            const storedRecentNotes = await dexieStore.getItem('recentNotes')
-            console.log('from dexie..', storedRecentNotes)
+            const storedRecentNotes = await dexieStore.getRecentNotes()
             setRecentNotes(storedRecentNotes);
         })()
 
@@ -75,7 +52,7 @@ const NoteList = () => {
                     recentNotes.map(({ symId, note }) => (
                         <div
                             onClick={async () => {
-                                const activeSymbol = await dexieStore.getItem('symbols').then((symbolArr) => {
+                                const activeSymbol = await dexieStore.getSymbols().then((symbolArr) => {
                                     return symbolArr.find((item) => item.symId == symId);
                                 });
                                 navigate(`/activeNotes/${JSON.stringify(activeSymbol)}`);
