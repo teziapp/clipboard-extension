@@ -8,7 +8,7 @@ db.version(1).stores({
     notes: "noteId, symId, title, content, date"
 })
 
-const dexieStore = {
+export const dexieStore = {
     getNotes: async () => {
         return await db.notes.toArray()
     },
@@ -51,5 +51,3 @@ const dexieStore = {
         await db.notes.delete(noteId)
     },
 }
-
-export { dexieStore }

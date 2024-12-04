@@ -4,6 +4,8 @@ import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { dexieStore } from '../../Dexie/DexieStore';
 import { formatDate } from './utils/formatDate';
+import cuid from 'cuid';
+
 
 const ActiveNotes = () => {
 
@@ -46,7 +48,7 @@ const ActiveNotes = () => {
     const addNote = (content) => {
         const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
         console.log(localMilliseconds)
-        const newNote = { noteId: localMilliseconds, content, symId: activeSymbol.symId, date: localMilliseconds, title: activeSymbol.title };
+        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds, title: activeSymbol.title };
         const updatedNotes = [...activeNotes, newNote];
         setActiveNotes(updatedNotes);
         dexieStore.addNote(newNote);

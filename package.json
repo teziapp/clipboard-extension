@@ -13,6 +13,7 @@
     "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
   },
   "dependencies": {
+    "cuid": "^3.0.0",
     "dexie": "^4.0.9",
     "fastest-levenshtein": "^1.0.16",
     "lucide-react": "^0.419.0",
