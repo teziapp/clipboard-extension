@@ -10,7 +10,7 @@ export const SnippetProvider = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const savedMode = localStorage.getItem('darkMode');
         return savedMode ? JSON.parse(savedMode) : false;
-    });
+    })
 
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
@@ -48,7 +48,7 @@ export const SnippetProvider = ({ children }) => {
 
     const updateTag = (updatedTag) => {
         setTags(prevTags => {
-            const updatedTags = prevTags.map(tag => 
+            const updatedTags = prevTags.map(tag =>
                 tag.name === updatedTag.name ? updatedTag : tag
             );
             localStorage.setItem('tags', JSON.stringify(updatedTags));

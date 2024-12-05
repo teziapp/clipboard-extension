@@ -37,7 +37,7 @@ var server = new WebpackDevServer(
     host: 'localhost',
     port: env.PORT,
     static: {
-      directory: path.join(__dirname, '../build'),
+      directory: path.join(__dirname, '../serverHomePage/'),
     },
     devMiddleware: {
       publicPath: `http://localhost:${env.PORT}/`,
