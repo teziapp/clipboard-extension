@@ -8,7 +8,7 @@ db.symbols.bulkAdd([
     { symId: 3, title: 'AB real', symbols: ["adireal", "abreal"] },
     { symId: 4, title: 'Shiv Textile & Chemicals', symbols: ["shivtx", "shtexchem"] },
     { symId: 5, title: 'Kaka industries', symbols: ["kkind", 'kaka'] }
-]).then(() => console.log('done'))
+]).then(() => console.log('done'));
 
 db.notes.bulkPut([
     { noteId: 1731582409387, content: "new note", symId: 2, date: 1731582409387, title: 'DomsInd' },
