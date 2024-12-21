@@ -1,5 +1,6 @@
 import dexieStore, { db } from "../../Dexie/DexieStore";
 
+//this is a comment
 
 // FOLLOWIG LINES WILL ADD SOME DUMMY DATA IN DEXIE TO GET STARTED WITH...uncomment them to use
 // db.symbols.bulkAdd([
