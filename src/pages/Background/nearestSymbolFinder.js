@@ -1,4 +1,4 @@
-import dexieStore from "../../Dexie/DexieStore"
+import { dexieStore } from "../../Dexie/DexieStore"
 import { closest, distance } from 'fastest-levenshtein';
 
 //code to find the nearest matching symbol
@@ -9,7 +9,7 @@ import { closest, distance } from 'fastest-levenshtein';
 // two new properties for each symbol - nearByIndex and bias  
 export default async function nearestSymbolFinder(clickedSymbol) {
 
-    const symbolData = await dexieStore.getItem('symbols') || '[]'
+    const symbolData = await dexieStore.getSymbols() || '[]'
     console.log(symbolData)
 
     if (symbolData.length == 0) return

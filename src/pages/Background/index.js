@@ -1,6 +1,5 @@
-import dexieStore, { db } from "../../Dexie/DexieStore";
-
-//this is a comment
+import { dexieStore, db } from "../../Dexie/DexieStore";
+import nearestSymbolFinder from "./nearestSymbolFinder";
 
 // FOLLOWIG LINES WILL ADD SOME DUMMY DATA IN DEXIE TO GET STARTED WITH...uncomment them to use
 // db.symbols.bulkAdd([
@@ -22,3 +21,50 @@ import dexieStore, { db } from "../../Dexie/DexieStore";
 
 
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    switch (message.msg) {
+        case 'clickedSymbol':
+            onClickHandler(message.payload).then((res) => {
+                console.log('this time...', res)
+                sendResponse(res)
+            })
+            break;
+    }
+    return true
+})
+
+//it will check for whether exact match of clicked symbol is found or not and accordinglu returns response object
+async function onClickHandler(clickedSymbol) {
+    const nearestSymbols = await nearestSymbolFinder(clickedSymbol) || []
+
+    if (nearestSymbols.length == 0) {
+        return {
+            msg: 'symbolMatchNotFound',
+            payload: nearestSymbols
+        }
+    }
+
+    if (nearestSymbols[0].nearbyIndex == 0) {
+        await activeSymbolSetter(nearestSymbols[0])
+        return {
+            msg: 'symbolMatchFound'
+        };
+    }
+
+    return {
+        msg: 'symbolMatchNotFound',
+        payload: nearestSymbols
+    }
+}
+
+async function activeSymbolSetter(symbol) {
+    console.log('it now... ', symbol)
+    chrome.action.openPopup()
+    return setTimeout(() => {
+        chrome.runtime.sendMessage({
+            msg: 'activeSymbolSelected',
+            payload: symbol
+        })
+    }, 200)
+
+}
