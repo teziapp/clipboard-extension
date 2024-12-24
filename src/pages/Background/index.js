@@ -1,4 +1,3 @@
-import { dexieStore, db } from "../../Dexie/DexieStore";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
 // FOLLOWIG LINES WILL ADD SOME DUMMY DATA IN DEXIE TO GET STARTED WITH...uncomment them to use
@@ -20,12 +19,10 @@ import nearestSymbolFinder from "./nearestSymbolFinder";
 // ])
 
 
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.msg) {
         case 'clickedSymbol':
             onClickHandler(message.payload).then((res) => {
-                console.log('this time...', res)
                 sendResponse(res)
             })
             break;

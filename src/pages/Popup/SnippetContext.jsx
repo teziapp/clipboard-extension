@@ -10,7 +10,6 @@ export const SnippetProvider = ({ children }) => {
     const navigate = useNavigate()
 
     chrome.runtime.onMessage.addListener((message) => {
-        console.log(message, "recieved")
         if (message.msg == 'activeSymbolSelected') {
             navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
         }
