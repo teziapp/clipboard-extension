@@ -81,5 +81,5 @@ async function activeSymbolSetter(symbol) {
             msg: 'activeSymbolSelected',
             payload: symbol
         })
-    }, 200)
+    }, 300)
 }
