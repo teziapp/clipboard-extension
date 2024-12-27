@@ -1,3 +1,4 @@
+import { dexieStore } from "../../Dexie/DexieStore";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
 // FOLLOWIG LINES WILL ADD SOME DUMMY DATA IN DEXIE TO GET STARTED WITH...uncomment them to use
@@ -26,6 +27,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse(res)
             })
             break;
+        case 'symbolConfirmed':
+            symbolConfirmationHandler(message.payload).then(() => {
+                sendResponse('symbol confirmed..')
+            })
+            break;
+
+        case 'addNewSymbol':
+            addNewSymbolHandler(message.payload).then(() => {
+                sendResponse('new symbol added')
+            })
     }
     return true
 })
@@ -45,6 +56,21 @@ async function onClickHandler(clickedSymbol) {
         msg: 'symbolMatchNotFound',
         payload: nearestSymbols
     }
+}
+
+async function symbolConfirmationHandler(symbolData) {
+    const { confirmedSymbol, newSymbol } = symbolData
+    await dexieStore.updateSymbol(confirmedSymbol, newSymbol)
+    await activeSymbolSetter(confirmedSymbol)
+}
+
+async function addNewSymbolHandler(symbolData) {
+    const addedSymbolId = await dexieStore.addNewSymbol(symbolData)
+    const addedSymbol = {
+        symId: addedSymbolId,
+        ...symbolData
+    }
+    await activeSymbolSetter(addedSymbol)
 }
 
 //it will open the popup and send a message in runtime with the particular symbol that has been selected as active symbol

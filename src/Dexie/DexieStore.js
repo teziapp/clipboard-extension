@@ -13,7 +13,7 @@ export const dexieStore = {
         return await db.notes.toArray()
     },
 
-    getActiveNotes: async (activeSymId = null) => {
+    getActiveNotes: async (activeSymId) => {
         return await db.notes.where('symId').equals(activeSymId).toArray()
     },
 
@@ -50,4 +50,18 @@ export const dexieStore = {
     deleteNote: async (noteId) => {
         await db.notes.delete(noteId)
     },
+
+    updateSymbol: async (symbol, newVariant) => {
+        await db.symbols.put({
+            symId: symbol.symId,
+            title: symbol.title,
+            symbols: [...symbol.symbols, newVariant]
+        })
+    },
+
+    addNewSymbol: async (symbol) => {
+        return await db.symbols.add({
+            ...symbol
+        })
+    }
 }
