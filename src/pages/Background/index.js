@@ -34,14 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function onClickHandler(clickedSymbol) {
     const nearestSymbols = await nearestSymbolFinder(clickedSymbol) || []
 
-    if (nearestSymbols.length == 0) {
-        return {
-            msg: 'symbolMatchNotFound',
-            payload: nearestSymbols
-        }
-    }
-
-    if (nearestSymbols[0].nearbyIndex == 0) {
+    if (nearestSymbols.length != 0 && nearestSymbols[0].nearbyIndex == 0) {
         await activeSymbolSetter(nearestSymbols[0])
         return {
             msg: 'symbolMatchFound'
