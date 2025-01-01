@@ -1,10 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SnippetContext = createContext();
 
 export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
+
+    const navigate = useNavigate()
+
+    chrome.runtime.onMessage.addListener((message) => {
+        if (message.msg == 'activeSymbolSelected') {
+            navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
+        }
+    })
+
+
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
     const [isDarkMode, setIsDarkMode] = useState(() => {

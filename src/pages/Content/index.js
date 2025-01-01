@@ -1,9 +1,4 @@
-import { printLine } from './modules/print';
-
-console.log('Content script works!');
-console.log('Must reload extension for modifications to take effect.');
-
-printLine("Using the 'printLine' function from the Print Module");
+import symbolConfirmationDialog from "./modules/symbolConfirmationDialogue"
 
 let currentSymbol
 
@@ -66,7 +61,9 @@ document.querySelectorAll('td').forEach((i) => {
 
         document.getElementById('note-down').classList.remove('hide-btn')
 
-        //document.getElementById('note-down').addEventListener('click', onClickHandler)
-
     })
+})
+
+document.addEventListener('scroll', () => {
+    document.getElementById('note-down').classList.add('hide-btn')
 })
