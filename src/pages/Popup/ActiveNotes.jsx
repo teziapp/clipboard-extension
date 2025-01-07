@@ -64,6 +64,7 @@ const ActiveNotes = () => {
     return (
 
         <div className={`w-full h-full font-sans flex flex-col ${isDarkMode ? 'bg-[#111b21]' : 'bg-[#eae6df]'}`}>
+
             {/* Header Section */}
             <div className={`flex items-center gap-3 px-4 py-3 shadow-md ${isDarkMode ? 'bg-[#202c33]' : 'bg-[#f0f2f5]'}`}>
                 <ArrowLeft
@@ -94,16 +95,16 @@ const ActiveNotes = () => {
                             {groupedNotes[date].map((note) => (
                                 <div
                                     key={note.noteId}
-                                    className={`flex ${isDarkMode ? 'bg-[#1f2b27]' : 'bg-[#d9fdd3]'} rounded-lg p-3 mb-3 shadow`}
+                                    className={`flex ${isDarkMode ? 'bg-[#234a40]' : 'bg-[#d0ffc7]'} rounded-lg p-3 mb-3 shadow`}
                                 >
                                     <div className="flex-grow">
                                         <div
-                                            className={`overflow-auto text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}
+                                            className={`overflow-auto text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}
                                         >
                                             {note.content}
                                         </div>
                                         <div className="flex justify-between items-center mt-2">
-                                            <span className="text-xs text-gray-500">
+                                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 {new Date(note.date).toISOString().split('T')[1].substring(0, 5)}
                                             </span>
                                             <button
@@ -135,7 +136,7 @@ const ActiveNotes = () => {
                 <input
                     type="text"
                     placeholder="Take a note"
-                    className={`flex-grow px-3 py-2 rounded-full text-sm outline-none ${isDarkMode ? 'bg-[#2a3942] text-gray-200 placeholder-gray-400' : 'bg-[#ffffff] text-gray-800 placeholder-gray-500'
+                    className={`flex-grow px-3 py-2 rounded-full text-sm outline-none ${isDarkMode ? 'bg-[#3c484f] text-gray-200 placeholder-gray-400' : 'bg-[#ffffff] text-gray-800 placeholder-gray-500'
                         }`}
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}

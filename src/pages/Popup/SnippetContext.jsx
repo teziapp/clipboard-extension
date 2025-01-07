@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const SnippetContext = createContext();
@@ -7,9 +7,30 @@ export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
 
+    const clickedSymbolPayload = useRef({
+        clickedSymbol: "",
+        nearestSymbols: []
+    })
+
     const navigate = useNavigate()
 
     chrome.runtime.onMessage.addListener((message) => {
+        switch (message.msg) {
+            case 'activeSymbolSelected':
+                navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
+                break;
+
+            case 'nearestSymbolsList':
+                clickedSymbolPayload.current = message.payload
+                navigate('/symbolConfirmationMenu')
+                break;
+        }
+        if (message.msg == 'activeSymbolSelected') {
+
+        }
+    })
+
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.msg == 'activeSymbolSelected') {
             navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
         }
@@ -122,7 +143,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload }}>
             {children}
         </SnippetContext.Provider>
     );
