@@ -25,9 +25,6 @@ export const SnippetProvider = ({ children }) => {
                 navigate('/symbolConfirmationMenu')
                 break;
         }
-        if (message.msg == 'activeSymbolSelected') {
-
-        }
     })
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

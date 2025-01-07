@@ -29,25 +29,12 @@ async function symbolButtonClickHandler(clickedSymbol) {
 
 //it will open the popup and send a message in runtime with the required payload
 async function openPopup(msg, payload) {
-    switch (msg) {
-        case 'activeSymbolSelected':
-            chrome.action.openPopup()
-            return setTimeout(() => {
-                chrome.runtime.sendMessage({
-                    msg: 'activeSymbolSelected',
-                    payload,
-                })
-            }, 300)
-            break;
-
-        case "nearestSymbolsList":
-            chrome.action.openPopup()
-            setTimeout(() => {
-                chrome.runtime.sendMessage({
-                    msg: "nearestSymbolsList",
-                    payload
-                })
-            }, 300)
-            break;
-    }
+    chrome.action.openPopup()
+    return setTimeout(() => {
+        chrome.runtime.sendMessage({
+            msg,
+            payload
+        })
+    }, 300)
 }
+
