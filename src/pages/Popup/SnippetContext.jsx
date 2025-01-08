@@ -27,12 +27,6 @@ export const SnippetProvider = ({ children }) => {
         }
     })
 
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.msg == 'activeSymbolSelected') {
-            navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
-        }
-    })
-
 
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);

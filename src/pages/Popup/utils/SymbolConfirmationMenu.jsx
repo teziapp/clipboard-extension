@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { dexieStore } from "../../../Dexie/DexieStore";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
 
@@ -20,10 +20,9 @@ const SymbolConfirmationMenu = () => {
             return;
         }
 
-        setSymbolDisplay(() =>
-            clickedSymbolPayload.current.nearestSymbols.filter((symbol) =>
-                symbol.title.toLowerCase().includes(searchValue.toLowerCase())
-            )
+        setSymbolDisplay(() => clickedSymbolPayload.current.nearestSymbols.filter((symbol) =>
+            symbol.title.toLowerCase().includes(searchValue.toLowerCase())
+        )
         );
     }, [searchValue]);
 
@@ -61,19 +60,20 @@ const SymbolConfirmationMenu = () => {
                     {symbolDisplay.map((i, index) => (
                         <div
                             key={index}
-                            className={`flex justify-between items-center p-2 rounded-md border text-[0.9rem] ${isDarkMode
+                            className={`flex justify-between items-center p-1 px-2 rounded-md border text-[0.9rem] ${isDarkMode
                                 ? "bg-[#1f2c34] text-gray-200 border-[#2a3942]"
                                 : "bg-gray-100 text-gray-800 border-gray-300"
                                 }`}
                         >
                             <span className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
                                 {`${i.title}: `}
+                                <br />
                                 <i className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                                     {`${i.symbols.join(", ")}`}
                                 </i>
                             </span>
                             <button
-                                className={`ml-2 p-2 rounded-md ${isDarkMode
+                                className={`ml-2 p-1 px-1 text-sm rounded-md ${isDarkMode
                                     ? "bg-[#00a884] text-white hover:bg-[#009175]"
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
@@ -87,8 +87,26 @@ const SymbolConfirmationMenu = () => {
                         </div>
                     ))}
 
+                    {symbolDisplay.length == clickedSymbolPayload.current.nearestSymbols.length ? null :
+
+                        <div className={`mt-5 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            didn't find any match?
+                            <br />
+                            <span
+                                className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
+                                onClick={() => {
+                                    setNewTitle(searchValue)
+                                    document.getElementById("symbolConfimationDialogue").showModal();
+                                }}>
+                                create new from here
+                            </span>
+                        </div>
+                    }
+
+
                     <button
                         onClick={() => {
+                            setNewTitle(searchValue)
                             document.getElementById("symbolConfimationDialogue").showModal();
                         }}
                         className={`absolute bottom-24 left-6 w-10 h-10 text-xl pb-1 font-bold rounded-lg shadow-lg ${isDarkMode
@@ -106,6 +124,12 @@ const SymbolConfirmationMenu = () => {
                     className={`p-4 rounded-md shadow-lg w-[90%] max-w-[400px] ${isDarkMode ? "bg-[#202c33] text-gray-200" : "bg-white text-gray-900"
                         }`}
                 >
+                    <button className="float-right text-red-500 hover:text-red-400"
+                        onClick={() => {
+                            document.getElementById("symbolConfimationDialogue").close();
+                        }}>
+                        <X size={18} strokeWidth={3} />
+                    </button>
                     <span className="text-lg mb-2 block">
                         Create a new chat for{" "}
                         <strong>{clickedSymbolPayload.current.clickedSymbol}</strong>
@@ -122,6 +146,8 @@ const SymbolConfirmationMenu = () => {
                     />
                     <button
                         onClick={async () => {
+                            if (newTitle == "") return;
+
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol]
