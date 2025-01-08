@@ -3,6 +3,7 @@ import { dexieStore } from "../../../Dexie/DexieStore";
 import { Search, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
+import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
 
 const SymbolConfirmationMenu = () => {
     const { isDarkMode, clickedSymbolPayload } = useSnippets();
@@ -25,6 +26,11 @@ const SymbolConfirmationMenu = () => {
         )
         );
     }, [searchValue]);
+
+    useEffect(() => {
+        const status = JSON.parse(localStorage.getItem("UserInstructions")).symbolMatchNotFound
+        status ? document.getElementById('symbolMatchNotFoundInstruction').showModal() : null
+    }, [])
 
     return (
         <>
@@ -168,6 +174,12 @@ const SymbolConfirmationMenu = () => {
                     >
                         Add
                     </button>
+                </dialog>
+
+                <dialog id="symbolMatchNotFoundInstruction"
+                    className={`p-4 rounded-md backdrop:backdrop-blur-[1px] w-[90%] max-w-[400px] ${isDarkMode ? "bg-[#202c33] text-gray-200" : "bg-white text-gray-900"
+                        }`}>
+                    <SymbolMatchNotFoundInstruction symbol={clickedSymbolPayload.current.clickedSymbol}></SymbolMatchNotFoundInstruction>
                 </dialog>
             </div>
         </>

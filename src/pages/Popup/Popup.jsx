@@ -11,6 +11,12 @@ import ActiveNotes from './ActiveNotes';
 import SymbolConfirmationMenu from './utils/SymbolConfirmationMenu';
 
 const Popup = () => {
+
+  localStorage.getItem("UserInstructions") ? null :
+    localStorage.setItem("UserInstructions", JSON.stringify({
+      "symbolMatchNotFound": true
+    }))
+
   return (
 
 
