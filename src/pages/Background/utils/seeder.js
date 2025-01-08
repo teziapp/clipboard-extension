@@ -1,7 +1,7 @@
 import { db } from "../../../Dexie/DexieStore";
 
 // FOLLOWIG LINES WILL ADD SOME DUMMY SAMPLE DATA IN DEXIE TO GET STARTED WITH...uncomment them to use
-export const seeder = () => {
+export const seedSymbols = () => {
 
     db.symbols.bulkPut([
         { symId: 1, title: 'Cynsies Tech', symbols: ["cyntech", "ctech"] },
@@ -11,7 +11,9 @@ export const seeder = () => {
         { symId: 5, title: 'Kaka industries', symbols: ["kkind", 'kaka'] },
         { symId: 11, title: 'Gopal2', symbols: ["gopu", 'gopal2snacks'] }
     ]).then(() => console.log('done'));
+}
 
+export const seedNotes = () => {
     db.notes.bulkPut([
         { noteId: 1731582409387, content: "new note", symId: 2, date: 1731582409387, title: 'DomsInd' },
         { noteId: 1731582409388, content: "a newwwww note", symId: 2, date: 17315824093, title: 'DomsInd' },
@@ -20,5 +22,4 @@ export const seeder = () => {
         { noteId: 1731582409391, content: "notessss-two", symId: 1, date: 173158240746, title: 'Cynsies Tech' },
         { noteId: 1731582409392, content: "notessss-two", symId: 4, date: 173158241749, title: 'Shiv Textile & Chemicals' }
     ])
-
 }

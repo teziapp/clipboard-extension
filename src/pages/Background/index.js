@@ -1,7 +1,6 @@
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
-// import { seeder } from "./utils/seeder";
-// seeder()
+// import { seedSymbols, seedNotes } from "./utils/seeder";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
