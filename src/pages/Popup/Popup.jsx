@@ -8,8 +8,15 @@ import SnippetList from './SnippetList';
 import TagManager from './TagManager';
 import NoteList from './NoteList';
 import ActiveNotes from './ActiveNotes';
+import SymbolConfirmationMenu from './utils/SymbolConfirmationMenu';
 
 const Popup = () => {
+
+  localStorage.getItem("UserInstructions") ? null :
+    localStorage.setItem("UserInstructions", JSON.stringify({
+      "symbolMatchNotFound": true
+    }))
+
   return (
 
 
@@ -27,9 +34,10 @@ const PopupContent = () => {
     <Router>
       <SnippetProvider>
         <div className={`w-[300px] h-[500px] shadow-md flex flex-col`}>
-          <div className="flex-grow overflow-y-auto">
+          <div className="flex-grow overflow-y-hidden">
             <Routes>
               <Route path="/" element={<SnippetList />} />
+              <Route path='/symbolConfirmationMenu' element={<SymbolConfirmationMenu />}></Route>
               <Route path="/add" element={<AddOrEditSnippet />} />
               <Route path="/edit/:snippetId" element={<AddOrEditSnippet />} />
               <Route path="/tags" element={<TagManager />} />

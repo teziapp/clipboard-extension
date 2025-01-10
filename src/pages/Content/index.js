@@ -1,5 +1,3 @@
-import symbolConfirmationDialog from "./modules/symbolConfirmationDialogue"
-
 let currentSymbol
 
 const button = document.createElement('button')
@@ -23,12 +21,7 @@ const onClickHandler = (e) => {
     e.stopPropagation()
     const clickedSymbol = currentSymbol.toLocaleLowerCase().replace(/[ .]/g, "")
     console.log(clickedSymbol, " has been clicked")
-    chrome.runtime.sendMessage({ msg: 'clickedSymbol', payload: clickedSymbol }, (res) => {
-        console.log('this time it was..', res)
-        if (res.msg == 'symbolMatchNotFound') {
-            symbolConfirmationDialog(res.payload, clickedSymbol)
-        }
-    })
+    chrome.runtime.sendMessage({ msg: 'clickedSymbol', payload: clickedSymbol })
 }
 
 button.addEventListener('click', onClickHandler)
