@@ -84,8 +84,14 @@ const SymbolConfirmationMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
-                                    await dexieStore.updateSymbol(i, clickedSymbolPayload.current.clickedSymbol);
-                                    navigate(`/activeNotes/${JSON.stringify(i)}`);
+                                    console.log(i.urls)
+                                    await dexieStore.updateSymbol({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                        urls: Array.from(new Set([...i.urls, clickedSymbolPayload.current.url]))
+                                    });
+                                    navigate(`/activeNotes/${i.symId}`);
                                 }}
                             >
                                 Select
@@ -156,15 +162,13 @@ const SymbolConfirmationMenu = () => {
 
                             const symbolToBeAdded = {
                                 title: newTitle,
-                                symbols: [clickedSymbolPayload.current.clickedSymbol]
+                                symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                urls: [clickedSymbolPayload.current.url]
                             };
                             const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded);
                             document.getElementById("symbolConfimationDialogue").close();
                             navigate(
-                                `/activeNotes/${JSON.stringify({
-                                    symId: idOfAddedSymbol,
-                                    ...symbolToBeAdded
-                                })}`
+                                `/activeNotes/${idOfAddedSymbol}`
                             );
                         }}
                         className={`w-full p-2 rounded-md font-semibold ${isDarkMode

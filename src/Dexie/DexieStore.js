@@ -3,9 +3,9 @@ import Dexie from "dexie";
 
 export const db = new Dexie('User')
 
-db.version(1).stores({
-    symbols: "++symId, title, *symbols",
-    notes: "noteId, symId, title, content, date"
+db.version(2).stores({
+    symbols: "++symId, title, *symbols, *urls",
+    notes: "noteId, symId, content, date"
 })
 
 export const dexieStore = {
@@ -19,6 +19,10 @@ export const dexieStore = {
 
     getSymbols: async () => {
         return await db.symbols.toArray()
+    },
+
+    getSymbol: async (symId) => {
+        return await db.symbols.get({ symId: symId })
     },
 
     // this is for the main noteList section (that shows all chats like whatsapp..)
@@ -47,21 +51,23 @@ export const dexieStore = {
         await db.notes.add(newNote)
     },
 
-    deleteNote: async (noteId) => {
-        await db.notes.delete(noteId)
-    },
-
-    updateSymbol: async (symbol, newVariant) => {
-        await db.symbols.put({
-            symId: symbol.symId,
-            title: symbol.title,
-            symbols: [...symbol.symbols, newVariant]
-        })
-    },
-
     addNewSymbol: async (symbol) => {
         return await db.symbols.add({
             ...symbol
         })
+    },
+
+    updateSymbol: async (symbolData) => {
+        await db.symbols.put({ ...symbolData })
+    },
+
+    deleteNote: async (noteId) => {
+        await db.notes.delete(noteId)
+    },
+
+    deleteSymbol: async (symId) => {
+        await db.symbols.delete(symId)
+        await db.notes.where("symId").equals(symId).delete()
+
     }
 }

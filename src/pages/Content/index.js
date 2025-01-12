@@ -19,9 +19,14 @@ document.body.appendChild(button)
 const onClickHandler = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    const clickedSymbol = currentSymbol.toLocaleLowerCase().replace(/[ .]/g, "")
+    const clickedSymbol = currentSymbol
     console.log(clickedSymbol, " has been clicked")
-    chrome.runtime.sendMessage({ msg: 'clickedSymbol', payload: clickedSymbol })
+    chrome.runtime.sendMessage({
+        msg: 'clickedSymbol', payload: {
+            clickedSymbol,
+            url: `${window.location.href}`
+        }
+    })
 }
 
 button.addEventListener('click', onClickHandler)

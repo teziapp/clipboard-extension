@@ -4,12 +4,12 @@ import { db } from "../../../Dexie/DexieStore";
 export const seedSymbols = () => {
 
     db.symbols.bulkPut([
-        { symId: 1, title: 'Cynsies Tech', symbols: ["cyntech", "ctech"] },
-        { symId: 2, title: 'DomsInd', symbols: ["doms"] },
-        { symId: 3, title: 'AB real', symbols: ["adireal", "abreal"] },
-        { symId: 4, title: 'Shiv Textile & Chemicals', symbols: ["shivtx", "shtexchem"] },
-        { symId: 5, title: 'Kaka industries', symbols: ["kkind", 'kaka'] },
-        { symId: 11, title: 'Gopal2', symbols: ["gopu", 'gopal2snacks'] }
+        { symId: 1, title: 'Cynsies Tech', symbols: ["cyn Tech", "Ctech"], urls: ["http://localhost:3000"] },
+        { symId: 2, title: 'DomsInd', symbols: ["DOMS"], urls: [] },
+        { symId: 3, title: 'AB real', symbols: ["AB real", "aditya birla real"], urls: ["http://localhost:400"] },
+        { symId: 4, title: 'Shiv Textile & Chemicals', symbols: ["Shiv TX", "shtexchem"], urls: ["http://localhost:3000"] },
+        { symId: 5, title: 'Kaka industries', symbols: ["kk ind", 'kaka'], urls: [] },
+        { symId: 11, title: 'Gopal2', symbols: ["gopu", 'gopal2 snacks'], urls: [] }
     ]).then(() => console.log('done'));
 }
 

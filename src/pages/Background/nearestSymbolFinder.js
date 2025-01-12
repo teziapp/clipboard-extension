@@ -5,8 +5,9 @@ import { closest, distance } from 'fastest-levenshtein';
 //the function goes on to comapare teh clicked symbol with all the archived symbols in database and...
 //..returns an array of 5 closest matching symbol object where each object contains all the previous symbol properties and adiitionally
 // two new properties for each symbol - levenshteinDistances and bias                                                                         
-export default async function nearestSymbolFinder(clickedSymbol) {
+export default async function nearestSymbolFinder(payload) {
 
+    const formattedClickedSymbol = payload.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")
     const symbolData = await dexieStore.getSymbols() || '[]'
 
     if (symbolData.length == 0) return;
@@ -19,14 +20,19 @@ export default async function nearestSymbolFinder(clickedSymbol) {
         //this field is an array which stores all the possible name variants for that symbol
         //the following function takes an array of variants as an arguments and returns the closest variant
 
-        const closestWord = closest(clickedSymbol, arrayOfVariants)
-        let bias = Math.abs(closestWord.length - clickedSymbol.length) // ideally bias will have to be 0..
+        const closestWord = closest(formattedClickedSymbol, arrayOfVariants.map(e => e.toLocaleLowerCase().replace(/[ .]/g, "")))
+        let bias = Math.abs(closestWord.length - formattedClickedSymbol.length) // ideally bias will have to be 0..
 
         //following line will get the 'levenshtine distance' or for the closest variant found
-        const levenshteinDistance = distance(clickedSymbol, closestWord)
+        const levenshteinDistance = distance(formattedClickedSymbol, closestWord)
 
+        const urlMatch = i.urls.find((url) => {
+            if (url == "") return;
+            return payload.url.includes(url)
+        }) ? true : false
         return {
             ...i,
+            urlMatch,
             levenshteinDistance,
             bias
         }

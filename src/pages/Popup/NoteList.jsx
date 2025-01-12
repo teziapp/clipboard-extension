@@ -9,11 +9,13 @@ const NoteList = () => {
     const navigate = useNavigate()
 
     const [recentNotes, setRecentNotes] = useState([])
-    const { isDarkMode, refresh } = useSnippets();
+    const { isDarkMode, storedSymbols, setStoredSymbols } = useSnippets();
 
     useEffect(() => {
 
         (async () => {
+            const symbols = await dexieStore.getSymbols()
+            setStoredSymbols(symbols);
             const storedRecentNotes = await dexieStore.getRecentNotes()
             setRecentNotes(storedRecentNotes);
         })()
@@ -52,10 +54,7 @@ const NoteList = () => {
                     recentNotes.map(({ symId, note }) => (
                         <div
                             onClick={async () => {
-                                const activeSymbol = await dexieStore.getSymbols().then((symbolArr) => {
-                                    return symbolArr.find((item) => item.symId == symId);
-                                });
-                                navigate(`/activeNotes/${JSON.stringify(activeSymbol)}`);
+                                navigate(`/activeNotes/${symId}`);
                             }}
                             key={symId}
                             className={`flex items-center cursor-pointer hover:${isDarkMode ? 'bg-[#394e58]' : 'bg-[#e1e8eb]'
@@ -69,17 +68,17 @@ const NoteList = () => {
                                     }`}
                             >
                                 <span className="text-xl font-semibold text-white">
-                                    {note.title[0].toUpperCase()}
+                                    {storedSymbols.find((ele) => ele.symId == symId).title[0].toUpperCase()}
                                 </span>
                             </div>
 
                             {/* Note Info */}
                             <div className="pl-2 w-20 flex-1">
                                 <div className="flex justify-between">
-                                    <span className={`w-20 overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                                        {note.title}
+                                    <span className={`overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                                        {storedSymbols.find((ele) => ele.symId == symId).title}
                                     </span>
-                                    <span className={` ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    <span className={`ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                         {formatDate(note.date)}
                                     </span>
                                 </div>
