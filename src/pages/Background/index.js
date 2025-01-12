@@ -25,10 +25,6 @@ async function symbolButtonClickHandler(payload) {
         clickedSymbol: payload.clickedSymbol,
         url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0] //The regex part will capture the base URL.. and remve the paths and params
     })
-
-    console.log(exactMatch)
-    console.log(nearestSymbols)
-
 }
 
 //it will open the popup and send a message in runtime with the required payload
