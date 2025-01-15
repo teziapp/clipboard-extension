@@ -57,9 +57,7 @@ export const dexieStore = {
     },
 
     addNewSymbol: async (symbol) => {
-        return await db.symbols.add({
-            ...symbol
-        })
+        return await db.symbols.add(symbol)
     },
 
     updateSymbol: async (symbolData) => {
