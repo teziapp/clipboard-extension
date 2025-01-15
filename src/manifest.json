@@ -14,7 +14,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "js": [
         "contentScript.bundle.js"
       ],
@@ -32,5 +34,8 @@
       ],
       "matches": []
     }
+  ],
+  "permissions": [
+    "activeTab"
   ]
 }
