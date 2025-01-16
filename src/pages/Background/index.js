@@ -18,22 +18,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function symbolButtonClickHandler(payload) {
 
     const nearestSymbols = await nearestSymbolFinder(payload) || []
-    console.log(nearestSymbols)
+
     if (nearestSymbols.length == 0) return;
 
 
     const exactMatches = nearestSymbols.filter((symbol) => symbol.levenshteinDistance == 0)
 
-    // const negatives = await dexieStore.getNegatives(exactMatches.map((i) => {
-    //     return {
-    //         symId: i.symId,
-    //         symbol: payload.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")
-    //     }
-    // }))
-
-    // const positiveMatch = exactMatches.filter((match) => negatives.find(negative => match.symId == negative.symId && !negative.urls.some(url => payload.url.includes(url))))
-
-    exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', exactMatches[0]) : await openPopup('conflicOccurred', exactMatches)) : await openPopup('exactMatchNotFound', {
+    console.log("matched ..", exactMatches)
+    exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', exactMatches[0]) : await openPopup('conflictOccurred', { exactMatches, url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0], clickedSymbol: payload.clickedSymbol })) : await openPopup('exactMatchNotFound', {
         nearestSymbols,
         clickedSymbol: payload.clickedSymbol,
         url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0] //The regex part will capture the base URL.. and remve the paths and params

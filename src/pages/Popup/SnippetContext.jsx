@@ -11,6 +11,7 @@ export const SnippetProvider = ({ children }) => {
 
     const clickedSymbolPayload = useRef({
         clickedSymbol: "",
+        exactMatches: [],
         nearestSymbols: [],
         url: ""
     })
@@ -27,6 +28,8 @@ export const SnippetProvider = ({ children }) => {
                 break;
 
             case 'conflictOccurred':
+                clickedSymbolPayload.current = message.payload
+                navigate('/symbolConflictMenu/')
                 break;
         }
     })

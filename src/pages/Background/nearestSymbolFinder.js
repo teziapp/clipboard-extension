@@ -17,14 +17,13 @@ export default async function nearestSymbolFinder(payload) {
     const levenshteinDistancesTable = symbolData.map((i) => {
 
         const arrayOfPositiveVariants = i.symbols.filter((variant) => !activeNegatives.find((negative) => negative.symId == i.symId && negative.symbol == variant.toLocaleLowerCase().replace(/[ .]/g, "")))
-        console.log(arrayOfPositiveVariants)
+
         //in dexie, every symbol entry has a field called 'symbols',
         //this field is an array which stores all the possible name variants for that symbol
         //the following function takes an array of variants as an arguments and returns the closest variant
 
-        const closestWord = closest(formattedClickedSymbol, arrayOfPositiveVariants.map(e => e.toLocaleLowerCase().replace(/[ .]/g, "")))
+        const closestWord = closest(formattedClickedSymbol, arrayOfPositiveVariants.map(e => e.toLocaleLowerCase().replace(/[ .]/g, ""))) || ""
         let bias = Math.abs(closestWord.length - formattedClickedSymbol.length) // ideally bias will have to be 0..
-
         //following line will get the 'levenshtine distance' or for the closest variant found
         const levenshteinDistance = distance(formattedClickedSymbol, closestWord)
 
