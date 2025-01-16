@@ -9,6 +9,8 @@ import TagManager from './TagManager';
 import NoteList from './NoteList';
 import ActiveNotes from './ActiveNotes';
 import SymbolConfirmationMenu from './utils/SymbolConfirmationMenu';
+import { NoteSettings } from './NoteSettings';
+import { SymbolConflictMenu } from './utils/SymbolConflictMenu';
 
 const Popup = () => {
 
@@ -43,7 +45,9 @@ const PopupContent = () => {
               <Route path="/tags" element={<TagManager />} />
               <Route path="/settings" element={<Settings />} />
               <Route path='/noteList' element={<NoteList></NoteList>} />
-              <Route path='/activeNotes/:activeSymbol' element={<ActiveNotes></ActiveNotes>} />
+              <Route path='/activeNotes/:activeSymbolId' element={<ActiveNotes></ActiveNotes>} />
+              <Route path='/noteSettings/:activeSymbolId' element={<NoteSettings />}></Route>
+              <Route path='/symbolConflictMenu' element={<SymbolConflictMenu></SymbolConflictMenu>}></Route>
             </Routes>
           </div>
           <Navbar />

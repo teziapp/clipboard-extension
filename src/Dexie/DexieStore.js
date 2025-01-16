@@ -5,7 +5,8 @@ export const db = new Dexie('User')
 
 db.version(1).stores({
     symbols: "++symId, title, *symbols",
-    notes: "noteId, symId, title, content, date"
+    negatives: "[symId+symbol], *urls",
+    notes: "noteId, symId, content, date"
 })
 
 export const dexieStore = {
@@ -19,6 +20,10 @@ export const dexieStore = {
 
     getSymbols: async () => {
         return await db.symbols.toArray()
+    },
+
+    getSymbol: async (symId) => {
+        return await db.symbols.get({ symId: symId })
     },
 
     // this is for the main noteList section (that shows all chats like whatsapp..)
@@ -43,25 +48,35 @@ export const dexieStore = {
         return recentNotes
     },
 
+    getNegatives: async (arr) => {
+        return await db.negatives.bulkGet(arr)
+    },
+
     addNote: async (newNote) => {
         await db.notes.add(newNote)
+    },
+
+    addNewSymbol: async (symbol) => {
+        return await db.symbols.add(symbol)
+    },
+
+    updateSymbol: async (symbolData) => {
+        await db.symbols.put(symbolData)
+    },
+
+    updateNegatives: async (negativesArr) => {
+        await db.negatives.bulkPut(negativesArr)
+        const toBeDeleted = negativesArr.filter(negative => !negative.urls.length)
+        await db.negatives.bulkDelete(toBeDeleted.map(i => [i.symId, i.symbol]))
     },
 
     deleteNote: async (noteId) => {
         await db.notes.delete(noteId)
     },
 
-    updateSymbol: async (symbol, newVariant) => {
-        await db.symbols.put({
-            symId: symbol.symId,
-            title: symbol.title,
-            symbols: [...symbol.symbols, newVariant]
-        })
-    },
+    deleteSymbol: async (symId) => {
+        await db.symbols.delete(symId)
+        await db.notes.where("symId").equals(symId).delete()
 
-    addNewSymbol: async (symbol) => {
-        return await db.symbols.add({
-            ...symbol
-        })
     }
 }

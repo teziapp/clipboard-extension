@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,7 +12,8 @@ const ActiveNotes = () => {
     const { isDarkMode } = useSnippets();
     const [noteContent, setNoteContent] = useState('');
     const [activeNotes, setActiveNotes] = useState([])
-    const activeSymbol = JSON.parse(useParams().activeSymbol)
+    const [activeSymbol, setActiveSymbol] = useState({})
+    const activeSymbolId = parseInt(useParams().activeSymbolId)
 
     const navigate = useNavigate()
 
@@ -26,8 +27,10 @@ const ActiveNotes = () => {
 
     useEffect(() => {
         (async () => {
-            const storedActiveNotes = await dexieStore.getActiveNotes(activeSymbol.symId)
+            const storedActiveNotes = await dexieStore.getActiveNotes(activeSymbolId)
             setActiveNotes(storedActiveNotes)
+            const storedActiveSymbol = await dexieStore.getSymbol(activeSymbolId)
+            setActiveSymbol(storedActiveSymbol)
         })()
     }, [activeSymbol.symId])
 
@@ -48,7 +51,7 @@ const ActiveNotes = () => {
     const addNote = (content) => {
         const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
         console.log(localMilliseconds)
-        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds, title: activeSymbol.title };
+        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds };
         const updatedNotes = [...activeNotes, newNote];
         setActiveNotes(updatedNotes);
         dexieStore.addNote(newNote);
@@ -67,6 +70,12 @@ const ActiveNotes = () => {
 
             {/* Header Section */}
             <div className={`flex items-center gap-3 px-4 py-3 shadow-md ${isDarkMode ? 'bg-[#202c33]' : 'bg-[#f0f2f5]'}`}>
+                <button className='float-right absolute right-3 text-gray-500 hover:text-gray-700'
+                    onClick={() => {
+                        navigate(`/noteSettings/${activeSymbol.symId}`)
+                    }}>
+                    <Settings size={20}></Settings>
+                </button>
                 <ArrowLeft
                     className={`cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-[#008069] hover:text-[#006d57]'}`}
                     size={24}

@@ -7,26 +7,32 @@ export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
 
+    const navigate = useNavigate()
+
     const clickedSymbolPayload = useRef({
         clickedSymbol: "",
-        nearestSymbols: []
+        exactMatches: [],
+        nearestSymbols: [],
+        url: ""
     })
-
-    const navigate = useNavigate()
 
     chrome.runtime.onMessage.addListener((message) => {
         switch (message.msg) {
-            case 'activeSymbolSelected':
-                navigate(`/activeNotes/${JSON.stringify(message.payload)}`)
+            case 'exactMatchFound':
+                navigate(`/activeNotes/${message.payload.symId}`)
                 break;
 
-            case 'nearestSymbolsList':
+            case 'exactMatchNotFound':
                 clickedSymbolPayload.current = message.payload
                 navigate('/symbolConfirmationMenu')
                 break;
+
+            case 'conflictOccurred':
+                clickedSymbolPayload.current = message.payload
+                navigate('/symbolConflictMenu/')
+                break;
         }
     })
-
 
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
@@ -34,6 +40,7 @@ export const SnippetProvider = ({ children }) => {
         const savedMode = localStorage.getItem('darkMode');
         return savedMode ? JSON.parse(savedMode) : false;
     })
+    const [storedSymbols, setStoredSymbols] = useState([])
 
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
@@ -134,7 +141,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols }}>
             {children}
         </SnippetContext.Provider>
     );

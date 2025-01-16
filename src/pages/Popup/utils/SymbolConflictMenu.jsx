@@ -1,60 +1,41 @@
-import React, { useEffect, useRef, useState } from "react";
-import { dexieStore } from "../../../Dexie/DexieStore";
-import { Search, X } from "lucide-react";
-import { useSnippets } from "../SnippetContext";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
+import { dexieStore } from "../../../Dexie/DexieStore";
+import { useState, useEffect } from "react";
+import { useSnippets } from "../SnippetContext";
+import { X } from "lucide-react";
 
-const SymbolConfirmationMenu = () => {
+export const SymbolConflictMenu = () => {
     const { isDarkMode, clickedSymbolPayload } = useSnippets();
 
-    const [searchValue, setSearchValue] = useState("");
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("this is..", clickedSymbolPayload.current)
-        if (searchValue === "") {
-            setSymbolDisplay(clickedSymbolPayload.current.nearestSymbols);
-            return;
-        }
-
-        setSymbolDisplay(() => clickedSymbolPayload.current.nearestSymbols.filter((symbol) =>
-            symbol.title.toLowerCase().includes(searchValue.toLowerCase())
-        )
-        );
-    }, [searchValue]);
-
-    useEffect(() => {
-        const status = JSON.parse(localStorage.getItem("UserInstructions")).symbolMatchNotFound
-        status ? document.getElementById('symbolMatchNotFoundInstruction').showModal() : null
+        setSymbolDisplay(clickedSymbolPayload.current.exactMatches)
     }, [])
 
     return (
         <>
             <div className={`w-full h-full flex flex-col ${isDarkMode ? "bg-[#111b21]" : "bg-[#f8f9fa]"}`}>
-                {/* Search Box */}
                 <div
-                    className={`w-full py-4 px-4 shadow-md ${isDarkMode ? "bg-[#202c33]" : "bg-[#f0f2f5]"}`}
+                    className={`w-full p-4 text-center ${isDarkMode ? "bg-gray-800 text-gray-300" : "bg-[#e9ecef] text-gray-700"
+                        } rounded-lg shadow-md`}
                 >
-                    <div
-                        className={`flex items-center w-full px-4 py-2 rounded-lg ${isDarkMode ? "bg-[#2a3942]" : "bg-[#ffffff]"}`}
+                    <h2 className="text-lg font-semibold">
+                        We found multiple chats with the same matching symbol:
+                    </h2>
+                    <span
+                        title={clickedSymbolPayload.current.clickedSymbol}
+                        className="text-xl font-bold truncate inline-block max-w-sm"
                     >
-                        <Search
-                            size={20}
-                            className={`mr-3 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
-                        />
-                        <input
-                            type="text"
-                            value={searchValue}
-                            placeholder="Search Titles"
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            className={`flex-1 bg-transparent outline-none ${isDarkMode ? "text-gray-200 placeholder-gray-400" : "text-gray-900 placeholder-gray-500"
-                                }`}
-                        />
-                    </div>
+                        {clickedSymbolPayload.current.clickedSymbol}
+                    </span>
+                    <p className="mt-2 text-sm">
+                        Please select the correct one for this site!
+                    </p>
                 </div>
 
                 {/* Main Body */}
@@ -84,11 +65,29 @@ const SymbolConfirmationMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
-                                    await dexieStore.updateSymbol({
-                                        symId: i.symId,
-                                        title: i.title,
-                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
-                                    });
+
+                                    const negativeSymbols = symbolDisplay.filter((symbol) => symbol.symId != i.symId)
+
+                                    const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
+
+                                    const toBeUpdatedNegatives = negativeSymbols.map((negative) => {
+                                        const alreadyExists = storedNegatives.find((i) => i?.symId == negative.symId)
+                                        if (alreadyExists) {
+                                            return {
+                                                ...alreadyExists,
+                                                urls: [...alreadyExists.urls, clickedSymbolPayload.current.url]
+                                            }
+                                        } else {
+                                            return {
+                                                symId: negative.symId,
+                                                symbol: clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, ""),
+                                                urls: [clickedSymbolPayload.current.url]
+                                            }
+                                        }
+                                    })
+
+                                    await dexieStore.updateNegatives(toBeUpdatedNegatives)
+
                                     navigate(`/activeNotes/${i.symId}`);
                                 }}
                             >
@@ -97,26 +96,24 @@ const SymbolConfirmationMenu = () => {
                         </div>
                     ))}
 
-                    {symbolDisplay.length == clickedSymbolPayload.current.nearestSymbols.length ? null :
 
-                        <div className={`mt-5 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            didn't find any match?
-                            <br />
-                            <span
-                                className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
-                                onClick={() => {
-                                    setNewTitle(searchValue)
-                                    document.getElementById("symbolConfimationDialogue").showModal();
-                                }}>
-                                create new from here
-                            </span>
-                        </div>
-                    }
+
+                    <div className={`mt-5 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        didn't find any match?
+                        <br />
+                        <span
+                            className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
+                            onClick={() => {
+                                document.getElementById("symbolConfimationDialogue").showModal();
+                            }}>
+                            create new from here
+                        </span>
+                    </div>
+
 
 
                     <button
                         onClick={() => {
-                            setNewTitle(searchValue)
                             document.getElementById("symbolConfimationDialogue").showModal();
                         }}
                         className={`absolute bottom-24 left-6 w-10 h-10 text-xl pb-1 font-bold rounded-lg shadow-lg ${isDarkMode
@@ -158,11 +155,35 @@ const SymbolConfirmationMenu = () => {
                         onClick={async () => {
                             if (newTitle == "") return;
 
+                            const negativeSymbols = symbolDisplay
+
+                            const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
+
+                            const toBeUpdatedNegatives = negativeSymbols.map((negative) => {
+                                const alreadyExists = storedNegatives.find((i) => i?.symId == negative.symId)
+                                if (alreadyExists) {
+                                    return {
+                                        ...alreadyExists,
+                                        urls: [...alreadyExists.urls, clickedSymbolPayload.current.url]
+                                    }
+                                } else {
+                                    return {
+                                        symId: negative.symId,
+                                        symbol: clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, ""),
+                                        urls: [clickedSymbolPayload.current.url]
+                                    }
+                                }
+                            })
+
+                            await dexieStore.updateNegatives(toBeUpdatedNegatives)
+
+
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
                             };
                             const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded);
+
                             document.getElementById("symbolConfimationDialogue").close();
                             navigate(
                                 `/activeNotes/${idOfAddedSymbol}`
@@ -176,15 +197,7 @@ const SymbolConfirmationMenu = () => {
                         Add
                     </button>
                 </dialog>
-
-                <dialog id="symbolMatchNotFoundInstruction"
-                    className={`p-4 rounded-md backdrop:backdrop-blur-[1px] w-[90%] max-w-[400px] ${isDarkMode ? "bg-[#202c33] text-gray-200" : "bg-white text-gray-900"
-                        }`}>
-                    <SymbolMatchNotFoundInstruction symbol={clickedSymbolPayload.current.clickedSymbol}></SymbolMatchNotFoundInstruction>
-                </dialog>
             </div>
         </>
     );
-};
-
-export default SymbolConfirmationMenu;
+}
