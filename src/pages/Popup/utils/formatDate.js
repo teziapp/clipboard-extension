@@ -1,6 +1,7 @@
 export const formatDate = (timestamp) => {
+    const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000)
     const date = new Date(timestamp);
-    const today = new Date();
+    const today = new Date(localMilliseconds);
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
 
