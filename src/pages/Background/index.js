@@ -1,4 +1,3 @@
-import { dexieStore } from "../../Dexie/DexieStore";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
 // import { seedSymbols, seedNotes, seedNegatives } from "./utils/seeder";
@@ -18,9 +17,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function symbolButtonClickHandler(payload) {
 
     const nearestSymbols = await nearestSymbolFinder(payload) || []
-
-    if (nearestSymbols.length == 0) return;
-
 
     const exactMatches = nearestSymbols.filter((symbol) => symbol.levenshteinDistance == 0)
 
