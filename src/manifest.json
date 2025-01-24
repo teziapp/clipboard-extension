@@ -34,5 +34,15 @@
       ],
       "matches": []
     }
-  ]
+  ],
+  "permissions": [
+    "identity",
+    "storage"
+  ],
+  "oauth2": {
+    "client_id": "650198074640-iecgvvc09dr0bgu6a6cqdc9obqsoch9n.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets"
+    ]
+  }
 }
