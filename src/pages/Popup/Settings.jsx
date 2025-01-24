@@ -2,18 +2,19 @@ import { Moon, Sun } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
+import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 
 const ExportIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="24" height="24" rx="6" fill="currentColor"/>
-    <path d="M12 16V8M12 16L9 13M12 16L15 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect width="24" height="24" rx="6" fill="currentColor" />
+    <path d="M12 16V8M12 16L9 13M12 16L15 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 const ImportIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="24" height="24" rx="6" fill="currentColor"/>
-    <path d="M12 8V16M12 8L9 11M12 8L15 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect width="24" height="24" rx="6" fill="currentColor" />
+    <path d="M12 8V16M12 8L9 11M12 8L15 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -21,6 +22,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode } = useSnippets();
   const [importError, setImportError] = useState(null);
+  const [sheetUrlInput, setSheetUrlInput] = useState("")
 
   const handleExport = () => {
     // Create CSV content
@@ -58,9 +60,9 @@ const Settings = () => {
           const importedSnippets = lines.slice(1).map(line => {
             const [content, tagsString, createdAt, updatedAt] = line.split(',').map(item => item.trim().replace(/^"|"$/g, ''));
             const snippetTags = tagsString.split(',').map(tag => tag.trim());
-            return { 
+            return {
               id: Math.random().toString(36).substr(2, 9), // Generate a new ID
-              content, 
+              content,
               tags: snippetTags,
               createdAt: createdAt || new Date().toISOString(),
               updatedAt: updatedAt || new Date().toISOString()
@@ -85,6 +87,16 @@ const Settings = () => {
       setImportError('Please select a valid CSV file');
     }
   };
+
+
+  async function registerSheetUrl() {
+    if (!sheetUrlInput) return alert('Enter a valid URL.');
+    const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
+    if (!sheetId) return alert('Enter a valid URL.');
+    console.log(sheetId)
+    const setup = await InitialUserSetup(sheetId)
+    setup == 'doneSetup' ? alert('Registration successful!') : alert('Oops.. something went wrong!')
+  }
 
   return (
     <div className={`p-4 h-full flex flex-col overflow-y-auto ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
@@ -130,12 +142,10 @@ const Settings = () => {
               checked={isDarkMode}
               onChange={toggleDarkMode}
             />
-            <div className={`w-14 h-7 bg-gray-300 rounded-full transition-colors ${
-              isDarkMode ? 'bg-blue-500' : ''
-            }`}>
-              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 flex items-center justify-center ${
-                isDarkMode ? 'translate-x-7' : ''
+            <div className={`w-14 h-7 bg-gray-300 rounded-full transition-colors ${isDarkMode ? 'bg-blue-500' : ''
               }`}>
+              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 flex items-center justify-center ${isDarkMode ? 'translate-x-7' : ''
+                }`}>
                 {isDarkMode ? (
                   <Moon size={12} className="text-blue-500" />
                 ) : (
@@ -145,6 +155,35 @@ const Settings = () => {
             </div>
           </div>
         </label>
+      </div>
+
+      <div className={`w-full mt-3 ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
+
+        <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-black"}`}>
+          Register Sheet-URL
+        </h3>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={sheetUrlInput}
+            onChange={(e) => setSheetUrlInput(e.target.value)}
+            placeholder="Enter your Sheet URL"
+            className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 ${isDarkMode
+              ? "bg-gray-600 text-white border-none focus:ring-[#00a884]"
+              : "bg-gray-100 text-black border focus:ring-blue-500"
+              }`}
+          />
+          <button
+            className={`px-4 py-2 rounded-md font-medium ${isDarkMode
+              ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+            onClick={() => registerSheetUrl()}
+          >
+            Register
+          </button>
+        </div>
       </div>
     </div>
   );
