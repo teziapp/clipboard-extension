@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { db, dexieStore } from "../../Dexie/DexieStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useSnippets } from "./SnippetContext";
+import { Loading } from "./utils/Loading";
 
 export const NoteSettings = () => {
     const activeSymbolId = parseInt(useParams().activeSymbolId);
@@ -12,6 +13,7 @@ export const NoteSettings = () => {
     const [linkedSymbols, setLinkedSymbols] = useState([]);
     const [negativeUrls, setNegativeUrls] = useState([]);
     const [negativeUrlInput, setNegativeUrlInput] = useState("");
+    const [loading, setLoading] = useState(false)
 
     const { isDarkMode } = useSnippets()
     const navigate = useNavigate();
@@ -225,6 +227,10 @@ export const NoteSettings = () => {
                             <button
                                 onClick={() => {
                                     if (!negativeUrlInput || !document.getElementById("negativeUrlSymbolSelector").value) return;
+                                    if (!negativeUrlInput.match(/^https?:\/\/[^\/\s]+/)) {
+                                        alert("Enter a valid URL")
+                                        return;
+                                    }
                                     const negativeToBeUpdated = negativeUrls.find(
                                         (i) =>
                                             document
@@ -277,15 +283,23 @@ export const NoteSettings = () => {
                                 alert("Enter title please")
                                 return;
                             }
+
+                            setLoading(true)
+
                             await dexieStore.updateSymbol({
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
+                            }).then((res) => {
+                                res.remoteUpdated.response?.result.status ? null : console.log(res)
                             })
 
-                            await dexieStore.updateNegatives(negativeUrls)
-
+                            await dexieStore.updateNegatives(negativeUrls).then((res) => {
+                                setLoading(false)
+                                res.remoteUpdate.response?.result.status ? null : console.log(res)
+                            })
                             navigate(`/activeNotes/${activeSymbolId}`)
+
                         }}
                     >
                         Save
@@ -328,6 +342,8 @@ export const NoteSettings = () => {
                     </button>
                 </div>
             </dialog>
+
+            <Loading show={loading}></Loading>
         </div>
     );
 

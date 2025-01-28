@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCheck, Plus, Settings, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -13,6 +13,8 @@ const ActiveNotes = () => {
     const [noteContent, setNoteContent] = useState('');
     const [activeNotes, setActiveNotes] = useState([])
     const [activeSymbol, setActiveSymbol] = useState({})
+    const [syncProps, setSyncProps] = useState({ strokeWidth: 1, color: "#A0A0A0", size: 15 })
+    const [recentNoteId, setRecentNoteId] = useState(null)
     const activeSymbolId = parseInt(useParams().activeSymbolId)
 
     const navigate = useNavigate()
@@ -47,6 +49,7 @@ const ActiveNotes = () => {
         groupedNotes[formattedDate] = [...groupedNotes[formattedDate], i]
     })
 
+
     //Notes functions
     const addNote = (content) => {
         const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
@@ -54,13 +57,28 @@ const ActiveNotes = () => {
         const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds };
         const updatedNotes = [...activeNotes, newNote];
         setActiveNotes(updatedNotes);
-        dexieStore.addNote(newNote);
+
+        setSyncProps({ strokeWidth: 1, color: "#A0A0A0" })
+        setRecentNoteId(newNote.noteId)
+
+        dexieStore.addNote(newNote).then((res) => {
+            if (res.remoteAdded.response?.result.status) {
+                setSyncProps({ strokeWidth: 2, color: "#239ed0", size: 18 })
+            } else {
+                console.log(res)
+            }
+        });
+        // addedNote(newNote).then((data) => {
+
+        // })
     };
 
     const deleteNote = (noteId) => {
         const updatedNotes = activeNotes.filter(note => note.noteId !== noteId);
         setActiveNotes(updatedNotes);
-        dexieStore.deleteNote(noteId);
+        dexieStore.deleteNote(noteId).then((result) => {
+            result.remoteDelete?.status ? null : console.log(result)
+        });
     };
 
 
@@ -89,7 +107,7 @@ const ActiveNotes = () => {
             {/* Notes Section */}
             <div id="notes-container" className="flex-grow overflow-y-auto px-4 py-3">
                 {notes.length > 0 ? (
-                    Object.keys(groupedNotes).map((date) => (
+                    Object.keys(groupedNotes).map((date, dateIndex) => (
                         <div key={date}>
                             {/* Date Separator */}
                             <div className="flex justify-center my-3">
@@ -101,7 +119,7 @@ const ActiveNotes = () => {
                             </div>
 
                             {/* Notes */}
-                            {groupedNotes[date].map((note) => (
+                            {groupedNotes[date].map((note, noteIndex) => (
                                 <div
                                     key={note.noteId}
                                     className={`flex ${isDarkMode ? 'bg-[#234a40]' : 'bg-[#d0ffc7]'} rounded-lg p-3 mb-3 shadow`}
@@ -113,9 +131,12 @@ const ActiveNotes = () => {
                                             {note.content}
                                         </div>
                                         <div className="flex justify-between items-center mt-2">
-                                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {new Date(note.date).toISOString().split('T')[1].substring(0, 5)}
-                                            </span>
+                                            <div className='flex flex-row gap-1'>
+                                                {note.noteId == recentNoteId ? <CheckCheck size={18} strokeWidth={syncProps.strokeWidth} color={syncProps.color}></CheckCheck> : null}
+                                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    {new Date(note.date).toISOString().split('T')[1].substring(0, 5)}
+                                                </span>
+                                            </div>
                                             <button
                                                 className={`text-gray-400 hover:text-red-500`}
                                                 onClick={() => deleteNote(note.noteId)}
@@ -123,6 +144,7 @@ const ActiveNotes = () => {
                                             >
                                                 <Trash2 size={16} />
                                             </button>
+
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +175,8 @@ const ActiveNotes = () => {
                 <button
                     className={`ml-4 ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-[#008069] hover:text-[#006d57]'}`}
                     onClick={() => {
-                        if (noteContent) addNote(noteContent)
+                        if (!noteContent) return;
+                        addNote(noteContent)
                         setNoteContent('');
                     }}
                     aria-label="Send message"

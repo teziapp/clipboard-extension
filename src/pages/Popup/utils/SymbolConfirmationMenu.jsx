@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
 import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
+import { Loading } from "./Loading";
 
 const SymbolConfirmationMenu = () => {
     const { isDarkMode, clickedSymbolPayload } = useSnippets();
@@ -11,6 +12,7 @@ const SymbolConfirmationMenu = () => {
     const [searchValue, setSearchValue] = useState("");
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
+    const [loading, setLoading] = useState(false)
 
     const navigate = useNavigate();
 
@@ -84,11 +86,16 @@ const SymbolConfirmationMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
+                                    setLoading(true)
                                     await dexieStore.updateSymbol({
                                         symId: i.symId,
                                         title: i.title,
                                         symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
-                                    });
+                                    }).then((res) => {
+                                        setLoading(false)
+                                        res.remoteUpdated.response?.result.status ? null : console.log(res)
+                                        return;
+                                    })
                                     navigate(`/activeNotes/${i.symId}`);
                                 }}
                             >
@@ -97,21 +104,21 @@ const SymbolConfirmationMenu = () => {
                         </div>
                     ))}
 
-                    {symbolDisplay.length == clickedSymbolPayload.current.nearestSymbols.length ? null :
 
-                        <div className={`mt-5 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            didn't find any match?
-                            <br />
-                            <span
-                                className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
-                                onClick={() => {
-                                    setNewTitle(searchValue)
-                                    document.getElementById("symbolConfimationDialogue").showModal();
-                                }}>
-                                create new from here
-                            </span>
-                        </div>
-                    }
+
+                    <div className={`mt-5 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        didn't find any match?
+                        <br />
+                        <span
+                            className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
+                            onClick={() => {
+                                setNewTitle(searchValue)
+                                document.getElementById("symbolConfimationDialogue").showModal();
+                            }}>
+                            create new from here
+                        </span>
+                    </div>
+
 
 
                     <button
@@ -158,12 +165,20 @@ const SymbolConfirmationMenu = () => {
                         onClick={async () => {
                             if (newTitle == "") return;
 
+                            document.getElementById("symbolConfimationDialogue").close();
+
+                            setLoading(true)
+
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
                             };
-                            const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded);
-                            document.getElementById("symbolConfimationDialogue").close();
+                            const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded).then((result) => {
+                                setLoading(false)
+                                result.remoteAdded.response?.result.status ? null : console.log(result)
+                                return result.localAdded
+                            })
+
                             navigate(
                                 `/activeNotes/${idOfAddedSymbol}`
                             );
@@ -182,6 +197,8 @@ const SymbolConfirmationMenu = () => {
                         }`}>
                     <SymbolMatchNotFoundInstruction symbol={clickedSymbolPayload.current.clickedSymbol}></SymbolMatchNotFoundInstruction>
                 </dialog>
+
+                <Loading show={loading}></Loading>
             </div>
         </>
     );
