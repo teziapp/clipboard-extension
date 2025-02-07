@@ -1,8 +1,11 @@
-import { Moon, Sun } from 'lucide-react';
-import React, { useState } from 'react';
+import { DownloadCloudIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
 import { InitialUserSetup } from './utils/auth/InitialUserSetup';
+import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
+import { dexieStore } from '../../Dexie/DexieStore';
+import { Loading } from './utils/Loading';
 
 const ExportIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,11 +23,13 @@ const ImportIcon = () => (
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode } = useSnippets();
+  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds } = useSnippets();
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleExport = () => {
+
     // Create CSV content
     const csvContent = [
       // CSV header
@@ -93,9 +98,16 @@ const Settings = () => {
     if (!sheetUrlInput) return alert('Enter a valid URL.');
     const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
     if (!sheetId) return alert('Enter a valid URL.');
-    console.log(sheetId)
+
+    setLoading(true)
+
     const setup = await InitialUserSetup(sheetId)
-    setup == 'doneSetup' ? alert('Registration successful!') : alert('Oops.. something went wrong!')
+    if (setup == 'doneSetup') {
+      alert('Registration successful!')
+      setUserCreds({ sheetId: "https://docs.google.com/spreadsheets/d/" + userCreds.sheetId })
+    } else { alert('Oops.. something went wrong!') }
+
+    setLoading(false)
   }
 
   return (
@@ -160,11 +172,30 @@ const Settings = () => {
       <div className={`w-full mt-3 ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
 
         <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-black"}`}>
-          Register Sheet-URL
+          Sheet Settings
         </h3>
 
-        <div className="flex gap-2">
-          <input
+
+        {userCreds.sheetId ? <div className={`flex flex-row justify-between mb-3 items-center p-2 rounded-md ${isDarkMode ? "bg-gray-600" : "bg-gray-200"}`}>
+          <span>
+            <a className={`underline font-semibold text-sm ${isDarkMode ? "text-[#00a884] hover:text-[#009172]" : "text-green-700 hover:text-blue-500"}`}
+              href={`https://docs.google.com/spreadsheets/d/${userCreds.sheetId}`}
+              target="_blank"
+              rel="noopener noreferrer">
+              Current-Sheet
+            </a>
+          </span>
+          <button className={`hover:text-red-500 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+            onClick={() => {
+              chrome.storage.local.remove("userCreds").then(() => {
+                setUserCreds({})
+              })
+            }}>
+            <Trash2 size={20} />
+          </button>
+        </div>
+
+          : <div className="flex flex-row gap-2 mb-2"><input
             type="text"
             value={sheetUrlInput}
             onChange={(e) => setSheetUrlInput(e.target.value)}
@@ -174,17 +205,67 @@ const Settings = () => {
               : "bg-gray-100 text-black border focus:ring-blue-500"
               }`}
           />
-          <button
-            className={`px-4 py-2 rounded-md font-medium ${isDarkMode
-              ? "bg-[#007c65] hover:bg-[#00a884] text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            onClick={() => registerSheetUrl()}
-          >
-            Register
-          </button>
+
+            <button
+              className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+                ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              onClick={() => registerSheetUrl()}
+            >
+              Register
+            </button>
+          </div>}
+
+
+
+
+        <div className='flex flex-row justify-between items-center mb-3'>
+          <span className='flex flex-row' title='Loads un-synced data to sheet'>Backup Un-synced data to sheet</span>
+          <button className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+            ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+            : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+            onClick={async () => {
+              setLoading(true)
+
+              await loadUnsynced().then((res1) => {
+                if (!res1 || res1 == 'networkError') {
+                  alert('something went wrong while backing up - check your coonection!!')
+                  return
+                }
+
+                deleteUnsynced().then((res2) => {
+                  if (!res2 || res2 == 'networkError') {
+                    alert('something went wrong while backing up - check your connection!')
+                    return
+                  }
+
+                  alert('synced data successfully')
+                })
+              }).catch(err => console.log(err))
+
+              setLoading(false)
+            }}>{<RefreshCcwIcon size={18}></RefreshCcwIcon>}</button>
+        </div>
+
+        <div className='flex flex-row justify-between items-center'>
+          <span className='flex flex-row' title='Loads un-synced data to sheet'>Load data from sheet to local</span>
+          <button className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+            ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+            : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+            onClick={async () => {
+              setLoading(true)
+              await dexieStore.populateLocal().then((res) => {
+                res ? alert("Loaded Data to Local Successfully!") : alert("Oops.. something went wrong!")
+              })
+              setLoading(false)
+            }}>{<DownloadCloudIcon size={18}></DownloadCloudIcon>}</button>
         </div>
       </div>
+
+      <Loading show={loading}></Loading>
     </div>
   );
 };
