@@ -9,11 +9,6 @@ import nearestSymbolFinder from "./nearestSymbolFinder";
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         symbolButtonClickHandler(message.payload)
-    } else if (message.msg == 'selectedSymbol') {
-        nearestSymbolFinder(message.payload).then((res) => {
-            sendResponse(res)
-        })
-        return true;
     } else if (message.msg == 'requestedSymbolList') {
         db.symbols.toArray((arr) => {
             sendResponse(arr)
@@ -29,7 +24,6 @@ async function symbolButtonClickHandler(payload) {
 
     const exactMatches = nearestSymbols.filter((symbol) => symbol.levenshteinDistance == 0)
 
-    console.log("matched ..", exactMatches)
     exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', { exactMatch: exactMatches[0], url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0] }) : await openPopup('conflictOccurred', { exactMatches, url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0], clickedSymbol: payload.clickedSymbol })) : await openPopup('exactMatchNotFound', {
         nearestSymbols,
         clickedSymbol: payload.clickedSymbol,

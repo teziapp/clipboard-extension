@@ -4,7 +4,6 @@ import { Search, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
 import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
-import { Loading } from "./Loading";
 import { addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 const SymbolConfirmationMenu = () => {
@@ -185,7 +184,7 @@ const SymbolConfirmationMenu = () => {
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
-                                color: "#FF881A"
+                                color: "#FFD0A3"
                             };
                             const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
