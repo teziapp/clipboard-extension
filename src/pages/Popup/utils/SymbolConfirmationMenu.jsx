@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import { dexieStore } from "../../../Dexie/DexieStore";
+import { db, dexieStore } from "../../../Dexie/DexieStore";
 import { Search, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
 import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
 import { Loading } from "./Loading";
+import { addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 const SymbolConfirmationMenu = () => {
-    const { isDarkMode, clickedSymbolPayload } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, setSymbolDataSynced } = useSnippets();
 
     const [searchValue, setSearchValue] = useState("");
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
-    const [loading, setLoading] = useState(false)
 
     const navigate = useNavigate();
 
@@ -86,17 +86,30 @@ const SymbolConfirmationMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
-                                    setLoading(true)
+
+                                    setSymbolDataSynced(false)
+
                                     await dexieStore.updateSymbol({
                                         symId: i.symId,
                                         title: i.title,
                                         symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
-                                    }).then((res) => {
-                                        setLoading(false)
-                                        res.remoteUpdated.response?.result.status ? null : console.log(res)
-                                        return;
                                     })
+
                                     navigate(`/activeNotes/${i.symId}`);
+
+                                    const remoteUpdated = await addOrUpdateSymbolToSheet({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    })
+
+                                    let syncStatus = remoteUpdated != 'networkError' && remoteUpdated?.response?.result.status ? 'true' : 'false'
+
+                                    db.symbols.update(i.symId, { synced: syncStatus })
+
+                                    syncStatus === 'true' ? setSymbolDataSynced(true) : null
+
+
                                 }}
                             >
                                 Select
@@ -167,21 +180,29 @@ const SymbolConfirmationMenu = () => {
 
                             document.getElementById("symbolConfimationDialogue").close();
 
-                            setLoading(true)
+                            setSymbolDataSynced(false) //initially set tit to true and then chnage if all goes fine
 
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                color: "#FF881A"
                             };
-                            const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded).then((result) => {
-                                setLoading(false)
-                                result.remoteAdded.response?.result.status ? null : console.log(result)
-                                return result.localAdded
-                            })
+                            const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
                             navigate(
-                                `/activeNotes/${idOfAddedSymbol}`
+                                `/activeNotes/${addedSymbol.symId}`
                             );
+
+                            //Updates symbol Data to sheet (below)
+                            const remoteAdded = await addOrUpdateSymbolToSheet(addedSymbol)
+
+                            let syncStatus = remoteAdded != 'networkError' && remoteAdded?.response?.result.status ? 'true' : 'false'
+
+                            await db.symbols.update(addedSymbol.symId, { synced: syncStatus })
+                            //Updates symbol Data to sheet (above)
+
+                            syncStatus === 'true' ? setSymbolDataSynced(true) : null
+
                         }}
                         className={`w-full p-2 rounded-md font-semibold ${isDarkMode
                             ? "bg-[#00a884] text-white hover:bg-[#009175]"
@@ -198,7 +219,6 @@ const SymbolConfirmationMenu = () => {
                     <SymbolMatchNotFoundInstruction symbol={clickedSymbolPayload.current.clickedSymbol}></SymbolMatchNotFoundInstruction>
                 </dialog>
 
-                <Loading show={loading}></Loading>
             </div>
         </>
     );

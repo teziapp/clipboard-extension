@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { dexieStore } from "../../../Dexie/DexieStore";
+import { db, dexieStore } from "../../../Dexie/DexieStore";
 import { useState, useEffect } from "react";
 import { useSnippets } from "../SnippetContext";
 import { X } from "lucide-react";
+import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 export const SymbolConflictMenu = () => {
     const { isDarkMode, clickedSymbolPayload } = useSnippets();
@@ -89,6 +90,14 @@ export const SymbolConflictMenu = () => {
                                     await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
                                     navigate(`/activeNotes/${i.symId}`);
+
+                                    //Update negativesToSheet (below)
+                                    const remoteUpdate = await addOrUpdateNegativesToSheet(toBeUpdatedNegatives)
+
+                                    let syncNegatives = toBeUpdatedNegatives.map((i) => ({ ...i, synced: remoteUpdate != 'networkError' && remoteUpdate?.response?.result.status ? 'true' : 'false' }))
+
+                                    await db.negatives.bulkPut(syncNegatives)
+                                    //Update negativesToSheet (above)
                                 }}
                             >
                                 Select
@@ -155,6 +164,8 @@ export const SymbolConflictMenu = () => {
                         onClick={async () => {
                             if (newTitle == "") return;
 
+                            document.getElementById("symbolConfimationDialogue").close();
+
                             const negativeSymbols = symbolDisplay
 
                             const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
@@ -178,16 +189,35 @@ export const SymbolConflictMenu = () => {
                             await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
 
+                            //Create Symbol
+
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                color: "#FF881A"
                             };
-                            const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded);
+                            const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
-                            document.getElementById("symbolConfimationDialogue").close();
                             navigate(
-                                `/activeNotes/${idOfAddedSymbol}`
+                                `/activeNotes/${addedSymbol.symId}`
                             );
+
+                            //Update negativesToSheet (below)
+                            const remoteUpdate = await addOrUpdateNegativesToSheet(toBeUpdatedNegatives)
+
+                            let syncNegatives = toBeUpdatedNegatives.map((i) => ({ ...i, synced: remoteUpdate != 'networkError' && remoteUpdate?.response?.result.status ? 'true' : 'false' }))
+
+                            await db.negatives.bulkPut(syncNegatives)
+                            //Update negativesToSheet (above)
+
+                            //Updates symbol Data to sheet (below)
+                            const remoteAdded = await addOrUpdateSymbolToSheet(addedSymbol)
+
+                            let syncStatus = remoteAdded != 'networkError' && remoteAdded?.response?.result.status ? 'true' : 'false'
+
+                            await db.symbols.update(addedSymbol.symId, { synced: syncStatus })
+                            //Updates symbol Data to sheet (above)
+
                         }}
                         className={`w-full p-2 rounded-md font-semibold ${isDarkMode
                             ? "bg-[#00a884] text-white hover:bg-[#009175]"
