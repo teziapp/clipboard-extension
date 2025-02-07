@@ -1,8 +1,9 @@
 async function InitialUserSetup(payload) {
 
     //getAuthToken will get temporary access token which will be stored in local with the key named userCreds
-    const authDone = await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
+        if (!navigator.onLine) resolve('error')
         chrome.identity.getAuthToken({
             interactive: true
         }, (token) => {
@@ -12,7 +13,7 @@ async function InitialUserSetup(payload) {
                 return;
             }
 
-            fetch(`https://script.googleapis.com/v1/scripts/AKfycbyM04ZW1u23cRDwzF6LIYctbLf8bLjKcebjelRIQbj_gmcKhReQhx5P2Pp4xL6IJLf1:run`, {
+            fetch(`https://script.googleapis.com/v1/scripts/AKfycbz1_ItBKRKZV-NNGuIDr2OPur0I1BWSm_KHCROAeAMwOwPUfhQIJi_ZGfZ1LNMTfZU3:run`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -50,7 +51,6 @@ async function InitialUserSetup(payload) {
     })
     // EDGE-CASE : is the above promise-chain properly handling all possible potential errors
 
-    return authDone
 }
 
 export { InitialUserSetup }
