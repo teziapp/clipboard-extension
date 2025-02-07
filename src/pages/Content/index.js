@@ -65,6 +65,39 @@ document.body.onmouseup = (e) => {
 }
 
 
+const startObserving = () => {
+
+    if (observer) {
+        observer.disconnect()
+    }
+
+    observer = new MutationObserver((mutations) => {
+        let shouldTraverse;
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes?.length) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE && !node.classList?.contains('levenshtineMatches')) {
+                        shouldTraverse = true;
+                    }
+                })
+            }
+        })
+
+        if (shouldTraverse && symbolsList.length) {
+            clearTimeout(window.mutationDebounceId)
+            window.mutationDebounceId = setTimeout(() => {
+                console.log('calling')
+                filterMatches(symbolsList)
+            }, 100)
+        }
+
+    })
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    })
+}
 
 
 chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
@@ -77,6 +110,6 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
     symbolsList = res;
 
     filterMatches(symbolsList)
-    //startObserving()
+    startObserving()
 
 })
