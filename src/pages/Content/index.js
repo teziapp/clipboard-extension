@@ -1,25 +1,33 @@
+import { filterMatches } from "./modules/dom-traversal/domTraversal";
+
 let currentSymbol
+let cursorX;
+let cursorY;
+
+export let symbolsList = [];
+export let observer;
+
+const flagButton = document.createElement('button')
+flagButton.id = 'flagButton'
+flagButton.classList.add('hide')
+flagButton.textContent = '📌'
+document.body.appendChild(flagButton)
+
 
 const button = document.createElement('button')
+document.body.appendChild(button)
+
 button.id = 'note-down'
 button.textContent = '+'
-button.style.cssText = `    
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid #000000;
-    cursor: pointer;
-    background: rgb(0, 0, 0);
-    z-index: 1000`
 
-button.classList.add('hide-btn')
+button.classList.add('hide')
 
-document.body.appendChild(button)
 
 const onClickHandler = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    const clickedSymbol = currentSymbol
+    button.classList.add('hide')
+    const clickedSymbol = currentSymbol.trim()
     console.log(clickedSymbol, " has been clicked")
     chrome.runtime.sendMessage({
         msg: 'clickedSymbol', payload: {
@@ -31,37 +39,44 @@ const onClickHandler = (e) => {
 
 button.addEventListener('click', onClickHandler)
 
-
-document.querySelectorAll('td').forEach((i) => {
-
-    const aTag = i.querySelector('a')
-
-    if (!aTag) return
-
-    const indicatorDot = document.createElement('span')
-    indicatorDot.textContent = '*'
-    indicatorDot.style.cssText += `
-                            position: absolute;
-                            top: ${i.getBoundingClientRect().y + 7}px;
-                            left: ${i.getBoundingClientRect().x - 15}px;
-                        `;
-    document.body.appendChild(indicatorDot)
-
-    i.addEventListener('mouseover', () => {
-
-        currentSymbol = aTag.textContent
-
-        document.getElementById('note-down').style.cssText += `
-                            position: fixed;
-                            top: ${i.getBoundingClientRect().y}px;
-                            left: ${i.getBoundingClientRect().x + 100}px;
-                        `;
-
-        document.getElementById('note-down').classList.remove('hide-btn')
-
-    })
+window.addEventListener('scroll', () => {
+    button.classList.add('hide')
+    flagButton.classList.add('hide')
 })
 
-document.addEventListener('scroll', () => {
-    document.getElementById('note-down').classList.add('hide-btn')
+document.body.onmouseup = (e) => {
+    // indicator.classList.add('hide')
+    cursorX = e.clientX
+    cursorY = e.clientY
+
+    const selectionObj = window.getSelection()
+    const selectedString = selectionObj.toString().trim()
+
+    if (selectedString) {
+
+        currentSymbol = selectedString
+
+        document.getElementById('note-down').classList.remove('hide')
+        button.style.top = cursorY - 30 + "px"
+        button.style.left = cursorX + 30 + "px"
+    } else {
+        button.classList.add('hide')
+    }
+}
+
+
+
+
+chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
+
+    if (!res?.length) {
+        console.log("Didn't recieve symbols")
+        return;
+    }
+
+    symbolsList = res;
+
+    filterMatches(symbolsList)
+    //startObserving()
+
 })
