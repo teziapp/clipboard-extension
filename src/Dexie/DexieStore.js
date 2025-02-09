@@ -69,21 +69,21 @@ export const dexieStore = {
 
     addNewSymbol: async (symbol) => {
 
-        const idOfAddedSymbol = await db.symbols.add(symbol)
+        const idOfAddedSymbol = await db.symbols.add({ ...symbol, synced: 'false' })
 
         return { symId: idOfAddedSymbol, ...symbol }
     },
 
     updateSymbol: async (symbolData) => {
 
-        const localUpdated = await db.symbols.put(symbolData)
+        const localUpdated = await db.symbols.put({ ...symbolData, synced: 'false' })
 
         return localUpdated
     },
 
     updateNegatives: async (negativesArr) => {
 
-        const localUpdate = await db.negatives.bulkPut(negativesArr)
+        const localUpdate = await db.negatives.bulkPut(negativesArr.map((n) => ({ ...n, synced: 'false' })))
 
 
         const toBeDeleted = negativesArr.filter(negative => !negative.urls.length)

@@ -6,6 +6,30 @@ import nearestSymbolFinder from "./nearestSymbolFinder";
 // seedSymbols()
 // seedNotes()
 
+// chrome.identity.getAuthToken({ interactive: true }, (token) => {
+//     fetch(`https://script.googleapis.com/v1/scripts/AKfycbx6oBF02b8V37e7Na20cAHbyr_x-cAI2WvFASZSv1vYvFRHrBCEqSgGbPNhfQWVqI5Z:run`, {
+//         method: "POST",
+//         headers: {
+//             "Authorization": `Bearer ${token}`,
+//             "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify({
+//             function: "init",
+//             parameters: [{ sheetId: "payload" }] //the sheetId obtained from UI will be used here
+//         })
+//     }).then((res) => {
+
+//         res.json().then((jsonRes) => {
+
+//             console.log(jsonRes)
+//         })
+
+//     }).catch((err) => {
+//         console.log("error from fetch..", err)
+//         resolve('error')
+//     })
+// })
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         symbolButtonClickHandler(message.payload)

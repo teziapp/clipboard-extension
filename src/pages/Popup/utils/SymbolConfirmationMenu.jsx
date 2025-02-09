@@ -196,6 +196,7 @@ const SymbolConfirmationMenu = () => {
                             const remoteAdded = await addOrUpdateSymbolToSheet(addedSymbol)
 
                             let syncStatus = remoteAdded != 'networkError' && remoteAdded?.response?.result.status ? 'true' : 'false'
+                            console.log(syncStatus)
 
                             await db.symbols.update(addedSymbol.symId, { synced: syncStatus })
                             //Updates symbol Data to sheet (above)

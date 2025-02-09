@@ -9,7 +9,7 @@ import cuid from 'cuid';
 
 const ActiveNotes = () => {
 
-    const { isDarkMode, clickedSymbolPayload, symbolDataSynced } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, symbolDataSynced, setSymbolDataSynced } = useSnippets();
     const [noteContent, setNoteContent] = useState('');
     const [activeNotes, setActiveNotes] = useState([])
     const [activeSymbol, setActiveSymbol] = useState({})
@@ -31,6 +31,7 @@ const ActiveNotes = () => {
         (async () => {
             const storedActiveSymbol = await dexieStore.getSymbol(activeSymbolId)
             setActiveSymbol(storedActiveSymbol)
+            setSymbolDataSynced(p => storedActiveSymbol.synced === 'true' ? true : false)
         })()
     }, [activeSymbol.symId])
 
@@ -117,7 +118,7 @@ const ActiveNotes = () => {
                         {activeSymbol.title}
                     </h1>
 
-                    <span className={`ml-2 text-xs ${isDarkMode ? "text" : "text-green-600"}`}>{symbolDataSynced ? "(Synced)" : "(Syncing..)"}</span>
+                    <span className={`ml-2 text-xs ${isDarkMode ? "text" : "text-green-600"}`}>{symbolDataSynced ? "(Synced)" : "(Un-synced)"}</span>
                 </div>
             </div>
 

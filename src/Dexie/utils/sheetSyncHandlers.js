@@ -5,9 +5,8 @@ const backupToSheetUrl = "https://script.googleapis.com/v1/scripts/AKfycbwbQ7ClW
 const populateLocalUrl = "https://script.googleapis.com/v1/scripts/AKfycbzh9rPw6yWiGYCKNLGoxWmjf9zTjCQZcCnexGndfXoTbeKhMersTozJtbP7ljRwTzc:run"
 
 async function getCreds() {
-    const sheetId = await chrome.storage.local.get(['userCreds']).then(({ userCreds }) => userCreds.sheetId)
+    const sheetId = await chrome.storage.local.get(['userCreds']).then(({ userCreds }) => userCreds?.sheetId)
     if (!sheetId || !navigator.onLine) return { sheetId, token: null }; // handls unRegistered user whose token can't be generated
-
     const token = await new Promise((res, rej) => {
         chrome.identity.getAuthToken({
             interactive: true

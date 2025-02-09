@@ -34,23 +34,24 @@ export function filterMatches(symbolObjects, nodeToBeTraversed = document.body) 
                 //start
                 let text = node.nodeValue
 
-
                 let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
                 let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
 
                 if (text.match(regex)) {
                     const parts = text.split(regex)
                     const frag = document.createDocumentFragment()
+                    console.log(parts)
 
                     parts.forEach((part, index) => {
+                        if (parts.length == 2 && parts[0] === "" && parts[1] === "" && index == 1) return;
 
-                        if (index % 2 === 1) {
+                        if (part === "") {
                             const span = document.createElement('span')
 
                             span.style.background = symbolObj.color || 'orange'
                             span.className = 'levenshtineMatches'
 
-                            span.innerHTML += symbol
+                            span.innerHTML = symbol
 
                             frag.appendChild(span)
 
