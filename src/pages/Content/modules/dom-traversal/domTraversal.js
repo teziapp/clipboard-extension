@@ -43,9 +43,9 @@ export function filterMatches(symbolObjects, nodeToBeTraversed = document.body) 
                     console.log(parts)
 
                     parts.forEach((part, index) => {
-                        if (parts.length == 2 && parts[0] === "" && parts[1] === "" && index == 1) return;
+                        if (index !== parts.length - 1) {
+                            frag.appendChild(document.createTextNode(part))
 
-                        if (part === "") {
                             const span = document.createElement('span')
 
                             span.style.background = symbolObj.color || 'orange'
@@ -81,7 +81,6 @@ export function filterMatches(symbolObjects, nodeToBeTraversed = document.body) 
                                 flagButton.addEventListener('click', flagButton._clickHandler)
 
                             })
-
 
                         } else {
                             frag.appendChild(document.createTextNode(part))
