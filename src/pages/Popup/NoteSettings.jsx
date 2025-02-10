@@ -4,6 +4,7 @@ import { db, dexieStore } from "../../Dexie/DexieStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useSnippets } from "./SnippetContext";
 import { Loading } from "./utils/Loading";
+import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../Dexie/utils/sheetSyncHandlers";
 
 export const NoteSettings = () => {
     const activeSymbolId = parseInt(useParams().activeSymbolId);
@@ -14,8 +15,9 @@ export const NoteSettings = () => {
     const [negativeUrls, setNegativeUrls] = useState([]);
     const [negativeUrlInput, setNegativeUrlInput] = useState("");
     const [loading, setLoading] = useState(false)
+    const [highlightColor, setHighlightColor] = useState("#FFD0A3")
 
-    const { isDarkMode } = useSnippets()
+    const { isDarkMode, setSymbolDataSynced } = useSnippets()
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,6 +25,7 @@ export const NoteSettings = () => {
             setActiveSymbol(symbol);
             setTitleInput(symbol.title);
             setLinkedSymbols(symbol.symbols);
+            setHighlightColor(symbol.color || "#FFD0A3")
         });
     }, []);
 
@@ -33,7 +36,6 @@ export const NoteSettings = () => {
                 symbol.toLocaleLowerCase().replace(/[ .]/g, "")
             ]
         })).then((arr) => {
-            console.log(arr)
             setNegativeUrls(arr.filter(negative => negative))
         })
 
@@ -65,12 +67,31 @@ export const NoteSettings = () => {
                         type="text"
                         value={titleInput}
                         onChange={(e) => setTitleInput(e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md ${isDarkMode
+                        className={`w-full px-3 py-2 border rounded-md mb-3 ${isDarkMode
                             ? "bg-gray-700 border-gray-600 text-gray-200"
                             : "bg-white border-gray-300"
                             }`}
                     />
                 </div>
+
+                {/* Highlighter */}
+                <div
+                    className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"
+                        }`}
+                >
+                    <label htmlFor="highlightColor" className="block mb-2 text-lg font-semibold">Highlight Color:</label>
+                    <input
+                        type="color"
+                        id="highlightColor"
+                        value={highlightColor}
+                        onChange={(e) => {
+                            console.log(highlightColor)
+                            setHighlightColor(e.target.value)
+                        }}
+                        className="w-5 h-5 cursor-pointer border-spacing-0 border-gray-300"
+                    />
+                </div>
+
 
                 {/* Linked Symbols Section */}
                 <div
@@ -284,22 +305,55 @@ export const NoteSettings = () => {
                                 return;
                             }
 
-                            setLoading(true)
+                            setSymbolDataSynced(false)
 
+                            //Handle Symbol on Local
                             await dexieStore.updateSymbol({
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
-                            }).then((res) => {
-                                res.remoteUpdated.response?.result.status ? null : console.log(res)
+                                color: highlightColor
                             })
 
-                            await dexieStore.updateNegatives(negativeUrls).then((res) => {
-                                setLoading(false)
-                                res.remoteUpdate.response?.result.status ? null : console.log(res)
-                            })
+                            //Handle Negatives on Local
+                            await dexieStore.updateNegatives(negativeUrls)
+
                             navigate(`/activeNotes/${activeSymbolId}`)
 
+                            //Update on sheet (below)
+                            const remoteUpdate = await addOrUpdateNegativesToSheet(negativeUrls)
+
+                            let syncNegatives = negativeUrls.map((i) => ({ ...i, synced: remoteUpdate != 'networkError' && remoteUpdate?.response?.result.status ? 'true' : 'false' }))
+
+                            await db.negatives.bulkPut(syncNegatives)
+
+                            const toBeDeleted = negativeUrls.filter(negative => !negative.urls.length)
+                            if (remoteUpdate == 'networkError' || !remoteUpdate?.response?.result.status) {
+                                toBeDeleted.length ? await db.deleteLog.bulkAdd(toBeDeleted.filter(negative => negative.synced == 'true').map(negative => {
+                                    return {
+                                        type: "negative",
+                                        object: {
+                                            symId: negative.symId,
+                                            symbol: negative.symbol
+                                        }
+                                    }
+                                })) : null
+                            }
+
+
+                            const remoteUpdatedSymbol = await addOrUpdateSymbolToSheet({
+                                symId: activeSymbolId,
+                                title: titleInput,
+                                symbols: linkedSymbols,
+                                color: highlightColor
+                            })
+
+                            let syncStatusForSymbol = remoteUpdatedSymbol != 'networkError' && remoteUpdatedSymbol?.response?.result.status ? 'true' : 'false'
+
+                            db.symbols.update(activeSymbolId, { synced: syncStatusForSymbol })
+
+                            syncNegatives.length ? (syncNegatives[0].synced === 'true' && syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null) : (syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null)
+                            //update to sheet (above)
                         }}
                     >
                         Save
@@ -333,8 +387,10 @@ export const NoteSettings = () => {
                         Cancel
                     </button>
                     <button onClick={async () => {
-                        await dexieStore.deleteSymbol(activeSymbolId)
                         document.getElementById("deleteConfirmationDialogue").close()
+                        setLoading(true)
+                        await dexieStore.deleteSymbol(activeSymbol)
+                        setLoading(false)
                         navigate('/noteList/')
                     }}
                         className="bg-red-500 hover:bg-red-400 mt-3 px-3 py-2 text-white rounded-md font-semibold">

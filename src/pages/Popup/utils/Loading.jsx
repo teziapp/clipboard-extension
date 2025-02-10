@@ -1,6 +1,6 @@
 import React from "react";
 
-export const Loading = ({ show }) => {
+export const Loading = ({ show, text }) => {
     if (!show) return null;
 
     return (
@@ -10,7 +10,7 @@ export const Loading = ({ show }) => {
         >
             <div className="flex items-center gap-2">
                 <div className="loader animate-spin rounded-full border-4 border-t-4 border-gray-300 border-t-green-500 w-9 h-9"></div>
-                <span className="text-white text-lg">Loading...</span>
+                <span className="text-white text-lg">{text || "Loading..."}</span>
             </div>
         </div>
     );

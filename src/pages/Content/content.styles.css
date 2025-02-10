@@ -1,3 +1,70 @@
-.hide-btn {
+.hide {
     display: none;
+}
+
+#note-down {
+    position: fixed;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgb(5, 161, 5);
+    cursor: pointer;
+    background: rgb(5, 161, 5);
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.25s ease-in-out;
+
+    &:hover {
+        background: rgb(0, 126, 0);
+    }
+}
+
+/* #indicator {
+    position: fixed;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+} */
+.levenshtineMatches {}
+
+#flagButton {
+    user-select: none;
+    position: fixed;
+    z-index: 1000;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    padding: 4px 8px;
+    animation: popIn 0.3s ease-out;
+
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    80% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+#flagButton:hover {
+    transform: scale(1.2);
 }

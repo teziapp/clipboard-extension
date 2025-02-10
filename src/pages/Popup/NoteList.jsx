@@ -4,12 +4,16 @@ import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { dexieStore } from '../../Dexie/DexieStore';
 import { formatDate } from './utils/formatDate';
+import { Loading } from './utils/Loading';
+import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 
 const NoteList = () => {
     const navigate = useNavigate()
 
+    const { isDarkMode, storedSymbols, setStoredSymbols, userCreds, setUserCreds } = useSnippets();
     const [recentNotes, setRecentNotes] = useState([])
-    const { isDarkMode, storedSymbols, setStoredSymbols } = useSnippets();
+    const [sheetUrlInput, setSheetUrlInput] = useState("")
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
 
@@ -22,7 +26,24 @@ const NoteList = () => {
 
     }, [])
 
+    async function registerSheetUrl() {
+        if (!sheetUrlInput) return alert('Enter a valid URL.');
+        const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
+        if (!sheetId) return alert('Enter a valid URL.');
+        setLoading(true)
+        const setup = await InitialUserSetup(sheetId).then((res) => {
+            setLoading(false)
+            return res
+        })
+        if (setup !== 'doneSetup') {
+            alert('Oops.. something went wrong!')
+        }
 
+        alert('Registration successful!')
+        setUserCreds({ sheetId })
+
+
+    }
 
     return (
         <div
@@ -92,14 +113,43 @@ const NoteList = () => {
                         </div>
                     ))
                 ) : (
-                    <p className={`text-center mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        No notes available.
-                    </p>
+                    <div className='flex flex-col justify-center'>
+                        <p className={`text-center mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            No notes available.
+                        </p>
+
+                        {userCreds.sheetId ? null : (<>
+                            <div className="flex gap-2 mt-4">
+                                <input
+                                    type="text"
+                                    value={sheetUrlInput}
+                                    onChange={(e) => setSheetUrlInput(e.target.value)}
+                                    placeholder="Enter your Sheet URL"
+                                    className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 ${isDarkMode
+                                        ? "bg-gray-600 text-white border-none focus:ring-[#00a884]"
+                                        : "bg-gray-100 text-black border focus:ring-blue-500"
+                                        }`}
+                                />
+
+                                <button
+                                    className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+                                        ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                        }`}
+                                    onClick={() => registerSheetUrl()}
+                                >
+                                    Register
+                                </button>
+                            </div>
+                            <p className={`text-center mt-3 font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>Backup all your Notes in a google sheet</p>
+                        </>)}
+
+
+                    </div>
                 )}
             </div>
+            <Loading text={"Sheet is getting registered..."} show={loading}></Loading>
         </div>
-
-
 
     );
 };

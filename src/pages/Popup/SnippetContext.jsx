@@ -19,7 +19,8 @@ export const SnippetProvider = ({ children }) => {
     chrome.runtime.onMessage.addListener((message) => {
         switch (message.msg) {
             case 'exactMatchFound':
-                navigate(`/activeNotes/${message.payload.symId}`)
+                clickedSymbolPayload.current = message.payload
+                navigate(`/activeNotes/${message.payload.exactMatch.symId}`)
                 break;
 
             case 'exactMatchNotFound':
@@ -34,6 +35,9 @@ export const SnippetProvider = ({ children }) => {
         }
     })
 
+    const [userCreds, setUserCreds] = useState({})
+    const [symbolDataSynced, setSymbolDataSynced] = useState(true)
+
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -46,6 +50,10 @@ export const SnippetProvider = ({ children }) => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
         setSnippets(storedSnippets);
         loadTags();
+        chrome.storage.local.get(["userCreds"]).then((val) => {
+            val.userCreds?.sheetId ? setUserCreds(val.userCreds) : setUserCreds({})
+        }
+        )
     }, []);
 
     const addSnippet = (newSnippet) => {
@@ -141,7 +149,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced }}>
             {children}
         </SnippetContext.Provider>
     );
