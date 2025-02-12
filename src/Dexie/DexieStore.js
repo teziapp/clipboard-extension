@@ -59,7 +59,6 @@ export const dexieStore = {
         const localAdded = await db.notes.add(newNote)
 
         const remoteAdded = await addNoteToSheet(newNote)
-
         let syncStatus = remoteAdded != 'networkError' && remoteAdded?.response?.result.status ? 'true' : 'false'
 
         await db.notes.update(localAdded, { synced: syncStatus })
@@ -94,7 +93,7 @@ export const dexieStore = {
 
     deleteNote: async (note) => {
         const localDelete = await db.notes.delete(note.noteId)
-        const remoteDelete = await deleteNoteInSheet({ note })
+        const remoteDelete = await deleteNoteInSheet(note)
 
         console.log(remoteDelete)
         if (note.synced == 'true') {
@@ -150,12 +149,12 @@ export const dexieStore = {
             await db.symbols.clear()
             await db.negatives.clear()
 
-            await db.symbols.bulkAdd(symbolsArrayResult.response.result.payload.map(symbol => ({ symId: symbol[0], title: symbol[1], symbols: JSON.parse(symbol[2]), color: symbol[3], synced: 'true' })))
+            await db.symbols.bulkAdd(symbolsArrayResult.response.result.payload.map(symbol => ({ symId: parseInt(symbol[0]), title: symbol[1], symbols: JSON.parse(symbol[2]), color: symbol[3], synced: 'true' })))
             await db.notes.bulkAdd(notesArrayResult.response.result.payload.map(note => {
                 note[3] = note[3] ? note[3] : cuid()
-                return { symId: note[0], content: note[2], noteId: note[3], date: note[4] || parseInt(note[1]) || Date.now(), url: note[5], synced: 'true' }
+                return { symId: parseInt(note[0]), content: note[2], noteId: note[3], date: parseInt(note[4]) || parseInt(note[1]) || Date.now(), url: note[5], synced: 'true' }
             }))
-            await db.negatives.bulkAdd(negativesArrayResult.response.result.payload.map(negative => ({ symId: negative[0], symbol: negative[1], urls: JSON.parse(negative[2]), synced: 'true' })))
+            await db.negatives.bulkAdd(negativesArrayResult.response.result.payload.map(negative => ({ symId: parseInt(negative[0]), symbol: negative[1], urls: JSON.parse(negative[2]), synced: 'true' })))
 
             return true;
         }

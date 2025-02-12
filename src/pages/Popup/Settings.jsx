@@ -94,6 +94,20 @@ const Settings = () => {
   };
 
 
+  async function generateSheetUrl() {
+    setLoading(true)
+
+    const setup = await InitialUserSetup()
+    if (setup == 'doneSetup') {
+      alert('Registration successful!')
+      chrome.storage.local.get(["userCreds"]).then((val) => {
+        setUserCreds(val.userCreds)
+      })
+    } else { alert('Oops.. something went wrong!') }
+
+    setLoading(false)
+  }
+
   async function registerSheetUrl() {
     if (!sheetUrlInput) return alert('Enter a valid URL.');
     const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
@@ -101,11 +115,9 @@ const Settings = () => {
 
     setLoading(true)
 
-    const setup = await InitialUserSetup(sheetId)
-    if (setup == 'doneSetup') {
-      alert('Registration successful!')
-      setUserCreds({ sheetId: "https://docs.google.com/spreadsheets/d/" + userCreds.sheetId })
-    } else { alert('Oops.. something went wrong!') }
+    chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
+      setUserCreds({ sheetId })
+    })
 
     setLoading(false)
   }
@@ -195,27 +207,45 @@ const Settings = () => {
           </button>
         </div>
 
-          : <div className="flex flex-row gap-2 mb-2"><input
-            type="text"
-            value={sheetUrlInput}
-            onChange={(e) => setSheetUrlInput(e.target.value)}
-            placeholder="Enter your Sheet URL"
-            className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 ${isDarkMode
-              ? "bg-gray-600 text-white border-none focus:ring-[#00a884]"
-              : "bg-gray-100 text-black border focus:ring-blue-500"
-              }`}
-          />
+          : <div className={`flex flex-col items-center p-3 mb-3 rounded-md ${isDarkMode ? "bg-[#2a3942]" : "bg-gray-100"}`}>
 
             <button
-              className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+              className={`w-full py-2 rounded-md font-medium transition duration-200 ${isDarkMode
                 ? "bg-[#007c65] hover:bg-[#00a884] text-white"
                 : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
-              onClick={() => registerSheetUrl()}
+              onClick={() => generateSheetUrl()}
             >
-              Register
+              Create New
             </button>
-          </div>}
+
+            <span className="my-2 text-sm text-gray-500">or</span>
+
+            <div className="flex flex-row w-full gap-1">
+              <input
+                type="text"
+                value={sheetUrlInput}
+                onChange={(e) => setSheetUrlInput(e.target.value)}
+                placeholder="Enter existing sheet URL"
+                className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 transition duration-200 ${isDarkMode
+                  ? "bg-gray-600 text-white border-none focus:ring-[#00a884] placeholder-gray-300"
+                  : "bg-white text-black border border-gray-300 focus:ring-blue-500 placeholder-gray-500"
+                  }`}
+              />
+
+              <button
+                className={`px-2 py-2 rounded-md font-medium transition duration-200 ${isDarkMode
+                  ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                onClick={() => registerSheetUrl()}
+              >
+                Register
+              </button>
+            </div>
+
+          </div>
+        }
 
 
 

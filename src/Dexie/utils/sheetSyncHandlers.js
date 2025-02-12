@@ -1,8 +1,8 @@
 import { db } from "../DexieStore";
 
-const loadLocalChangeUrl = "https://script.googleapis.com/v1/scripts/AKfycbx1Ogni4KIUZRhl-RK10dJsvP2I4_cDwo7NnO6_F6heF-qn8IKuUovflcJokmMfru43:run"
-const backupToSheetUrl = "https://script.googleapis.com/v1/scripts/AKfycbwbQ7ClWTIsBO6KoekN_sASTgpT5ztuKUyvogrbQNmHV3uVVYEikzAGn4GyTfJhCI-Q:run"
-const populateLocalUrl = "https://script.googleapis.com/v1/scripts/AKfycbzh9rPw6yWiGYCKNLGoxWmjf9zTjCQZcCnexGndfXoTbeKhMersTozJtbP7ljRwTzc:run"
+const loadLocalChangeUrl = "https://script.googleapis.com/v1/scripts/AKfycbzivdE4nJo0D8b6Ze9oxkw1k6U3NyOHRs4cDzCIRvJ3haH9fXrkijL_iz3lxfI4WYY7:run"
+const backupToSheetUrl = "https://script.googleapis.com/v1/scripts/AKfycbzwZmblsJAekLq45mcg7hixrJBT-aPNlBkzp4IhF5ApqO_J-4wfrpk6ILy1bCR4ql0a:run"
+const populateLocalUrl = "https://script.googleapis.com/v1/scripts/AKfycbxxekxFWn2W7wjl6BIYlF546C0oaQJJvvGYXzr8K__k9erTT8hVKZAsoNITGfa0xB30:run"
 
 async function getCreds() {
     const sheetId = await chrome.storage.local.get(['userCreds']).then(({ userCreds }) => userCreds?.sheetId)

@@ -30,19 +30,14 @@ const NoteList = () => {
         if (!sheetUrlInput) return alert('Enter a valid URL.');
         const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
         if (!sheetId) return alert('Enter a valid URL.');
+
         setLoading(true)
-        const setup = await InitialUserSetup(sheetId).then((res) => {
-            setLoading(false)
-            return res
+
+        chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
+            setUserCreds({ sheetId })
         })
-        if (setup !== 'doneSetup') {
-            alert('Oops.. something went wrong!')
-        }
 
-        alert('Registration successful!')
-        setUserCreds({ sheetId })
-
-
+        setLoading(false)
     }
 
     return (

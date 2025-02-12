@@ -1,4 +1,4 @@
-async function InitialUserSetup(payload) {
+async function InitialUserSetup() {
 
     //getAuthToken will get temporary access token which will be stored in local with the key named userCreds
     return new Promise((resolve, reject) => {
@@ -13,7 +13,7 @@ async function InitialUserSetup(payload) {
                 return;
             }
 
-            fetch(`https://script.googleapis.com/v1/scripts/AKfycbz1_ItBKRKZV-NNGuIDr2OPur0I1BWSm_KHCROAeAMwOwPUfhQIJi_ZGfZ1LNMTfZU3:run`, {
+            fetch(`https://script.googleapis.com/v1/scripts/AKfycbw8ZFnKnYCOa5d_B2JWGmDy_tcUwGGKTPODs68zN25u90vKip39-_XX0oDZ8w6tjrbE:run`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -21,16 +21,17 @@ async function InitialUserSetup(payload) {
                 },
                 body: JSON.stringify({
                     function: "setupSheets",
-                    parameters: [{ sheetId: payload }] //the sheetId obtained from UI will be used here
+                    parameters: []
                 })
             }).then((res) => {
 
                 res.json().then((jsonRes) => {
 
                     if (jsonRes.response?.result.status) {
+                        console.log(jsonRes.response?.result.spreadsheetId)
                         chrome.storage.local.set({   //if API call request goes fine, we will store the provided sheetId in userCreds 
                             'userCreds': {
-                                sheetId: payload
+                                sheetId: jsonRes.response?.result.spreadsheetId
                             }
                         }).then(() => {
                             resolve('doneSetup')
