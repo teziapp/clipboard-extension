@@ -84,7 +84,6 @@ export const dexieStore = {
 
         const localUpdate = await db.negatives.bulkPut(negativesArr.map((n) => ({ ...n, synced: 'false' })))
 
-
         const toBeDeleted = negativesArr.filter(negative => !negative.urls.length)
         await db.negatives.bulkDelete(toBeDeleted.map(i => [i.symId, i.symbol]))
 
@@ -95,9 +94,8 @@ export const dexieStore = {
         const localDelete = await db.notes.delete(note.noteId)
         const remoteDelete = await deleteNoteInSheet(note)
 
-        console.log(remoteDelete)
         if (note.synced == 'true') {
-            remoteDelete != 'networkError' && remoteDelete?.response?.result.status ? null : await db.deleteLog.add({ type: "note", object: { noteId: note.noteId } })
+            remoteDelete != 'networkError' && remoteDelete?.response?.result.status ? null : await db.deleteLog.add({ type: "note", object: note })
         }
 
         return { remoteDelete, localDelete }

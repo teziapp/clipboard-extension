@@ -1,20 +1,23 @@
-import { ArrowLeft, CheckCheck, Plus, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCheck, Drum, Plus, RefreshCcw, Settings, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import { dexieStore } from '../../Dexie/DexieStore';
+import { db, dexieStore } from '../../Dexie/DexieStore';
 import { formatDate } from './utils/formatDate';
 import cuid from 'cuid';
+import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
+import { Loading } from './utils/Loading';
 
 
 const ActiveNotes = () => {
 
-    const { isDarkMode, clickedSymbolPayload, symbolDataSynced, setSymbolDataSynced } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, symbolDataSynced, setSymbolDataSynced, setNotificationState } = useSnippets();
     const [noteContent, setNoteContent] = useState('');
     const [activeNotes, setActiveNotes] = useState([])
     const [activeSymbol, setActiveSymbol] = useState({})
     const [syncProps, setSyncProps] = useState({ strokeWidth: 1, color: "#A0A0A0" })
     const [recentNoteId, setRecentNoteId] = useState(null)
+    const [loading, setLoading] = useState(false)
     const activeSymbolId = parseInt(useParams().activeSymbolId)
 
     const navigate = useNavigate()
@@ -31,16 +34,27 @@ const ActiveNotes = () => {
         (async () => {
             const storedActiveSymbol = await dexieStore.getSymbol(activeSymbolId)
             setActiveSymbol(storedActiveSymbol)
-            setSymbolDataSynced(p => storedActiveSymbol.synced === 'true' ? true : false)
-        })()
-    }, [activeSymbol.symId])
 
-    useEffect(() => {
-        (async () => {
             const storedActiveNotes = await dexieStore.getActiveNotes(activeSymbolId)
             setActiveNotes(storedActiveNotes)
+
+            const storedNegatives = await dexieStore.getNegatives(storedActiveSymbol.symbols.map((i) => [storedActiveSymbol.symId, i])) || []
+
+            const deleteLogData = await db.deleteLog.toArray() || []
+
+            if (storedActiveSymbol.synced == 'false' ||
+                storedActiveNotes.find(note => note?.synced == 'false') ||
+                storedNegatives.find(negative => negative?.synced == 'false') ||
+                deleteLogData.find((i) => i?.object?.symId == storedActiveSymbol.symId)
+            ) {
+                setSymbolDataSynced(false)
+            } else {
+                setSymbolDataSynced(true)
+            }
+
         })()
-    }, [])
+    }, [symbolDataSynced])
+
 
     const { notes, groupedNotes } = useMemo(() => {
         const notes = activeNotes
@@ -81,6 +95,7 @@ const ActiveNotes = () => {
                     )
                 );
             } else {
+                setSymbolDataSynced(false)
                 console.log(res);
             }
         });
@@ -91,7 +106,11 @@ const ActiveNotes = () => {
         const updatedNotes = activeNotes.filter(existingNote => existingNote.noteId !== note.noteId);
         setActiveNotes(updatedNotes);
         dexieStore.deleteNote(note).then((res) => {
-            res.remoteDelete?.response?.status ? null : console.log(res)
+            if (!res.remoteDelete?.response?.result.status && note.synced == 'true') {
+                console.log(res)
+                setSymbolDataSynced(false)
+                setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete Note from sheet -check your connection!', duration: 3000 })
+            }
         });
     };
 
@@ -101,7 +120,7 @@ const ActiveNotes = () => {
         <div className={`w-full h-full font-sans flex flex-col ${isDarkMode ? 'bg-[#111b21]' : 'bg-[#eae6df]'}`}>
 
             {/* Header Section */}
-            <div className={`flex items-center gap-3 px-4 py-3 shadow-md ${isDarkMode ? 'bg-[#202c33]' : 'bg-[#f0f2f5]'}`}>
+            <div className={`flex items-start gap-3 px-3 py-3 shadow-md ${isDarkMode ? 'bg-[#202c33]' : 'bg-[#f0f2f5]'}`}>
                 <button className='float-right absolute right-3 text-gray-500 hover:text-gray-700'
                     onClick={() => {
                         navigate(`/noteSettings/${activeSymbol.symId}`)
@@ -113,12 +132,39 @@ const ActiveNotes = () => {
                     size={24}
                     onClick={() => navigate('/noteList')}
                 />
-                <div>
-                    <h1 className={`inline-block text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                <div className='leading-0'>
+                    <h1 className={`leading-none inline-block text-lg font-medium w-52 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                         {activeSymbol.title}
                     </h1>
+                    <br></br>
+                    <div className='flex flex-row'>
+                        <span className={`text-xs ${isDarkMode ? (symbolDataSynced ? "text-green-600" : "text-red-500") : (symbolDataSynced ? "text-green-600" : "text-red-500")}`}>{symbolDataSynced ? "(Synced)" : <text title='Some Data migh not have loaded in sheet'>{"(Un-synced)"}</text>}</span>
+                        {!symbolDataSynced && <button className='ml-1 mt-0.5 text-gray-500 hover:text-sky-800'
+                            onClick={async () => {
+                                setLoading(true)
+                                await loadUnsynced().then((res1) => {
+                                    if (!res1 || res1 == 'networkError') {
+                                        alert('something went wrong while backing up - check your coonection!!')
+                                        return
+                                    }
 
-                    <span className={`ml-2 text-xs ${isDarkMode ? "text" : "text-green-600"}`}>{symbolDataSynced ? "(Synced)" : "(Un-synced)"}</span>
+                                    return deleteUnsynced().then((res2) => {
+                                        if (!res2 || res2 == 'networkError') {
+                                            alert('something went wrong while backing up - check your connection!')
+                                            return
+                                        }
+                                        setNotificationState({ show: true, text: 'Synced data successfully', type: 'success', duration: 3000 })
+
+                                    })
+                                }).catch(err => console.log(err))
+
+                                setSymbolDataSynced(true)
+                                setLoading(false)
+                                navigate('/noteList')
+                            }} >
+                            <RefreshCcw size={13} ></RefreshCcw>
+                        </button>}
+                    </div>
                 </div>
             </div>
 
@@ -214,6 +260,9 @@ const ActiveNotes = () => {
                     <Plus size={24} />
                 </button>
             </div>
+
+            <Loading show={loading}></Loading>
+
         </div >
 
 

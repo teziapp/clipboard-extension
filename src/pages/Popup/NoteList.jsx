@@ -40,6 +40,20 @@ const NoteList = () => {
         setLoading(false)
     }
 
+    async function generateSheetUrl() {
+        setLoading(true)
+
+        const setup = await InitialUserSetup()
+        if (setup == 'doneSetup') {
+            alert('Registration successful!')
+            chrome.storage.local.get(["userCreds"]).then((val) => {
+                setUserCreds(val.userCreds)
+            })
+        } else { alert('Oops.. something went wrong!') }
+
+        setLoading(false)
+    }
+
     return (
         <div
             className={`w-full h-full font-sans flex flex-col ${isDarkMode ? 'bg-[#101d24] text-gray-200' : 'bg-[#eae6df] text-gray-900'}`}
@@ -109,25 +123,38 @@ const NoteList = () => {
                     ))
                 ) : (
                     <div className='flex flex-col justify-center'>
-                        <p className={`text-center mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <p className={`text-center my-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             No notes available.
                         </p>
 
-                        {userCreds.sheetId ? null : (<>
-                            <div className="flex gap-2 mt-4">
+                        {userCreds.sheetId ? null : (<div className={`flex flex-col items-center p-3 mb-3 rounded-md ${isDarkMode ? "bg-[#2a3942]" : "bg-gray-100"}`}>
+
+                            <button
+                                className={`w-full py-2 rounded-md font-medium transition duration-200 ${isDarkMode
+                                    ? "bg-[#007c65] hover:bg-[#00a884] text-white"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                                    }`}
+                                onClick={() => generateSheetUrl()}
+                            >
+                                Create New
+                            </button>
+
+                            <span className="my-2 text-sm text-gray-500">or</span>
+
+                            <div className="flex flex-row w-full gap-1">
                                 <input
                                     type="text"
                                     value={sheetUrlInput}
                                     onChange={(e) => setSheetUrlInput(e.target.value)}
-                                    placeholder="Enter your Sheet URL"
-                                    className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 ${isDarkMode
-                                        ? "bg-gray-600 text-white border-none focus:ring-[#00a884]"
-                                        : "bg-gray-100 text-black border focus:ring-blue-500"
+                                    placeholder="Enter existing sheet URL"
+                                    className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 transition duration-200 ${isDarkMode
+                                        ? "bg-gray-600 text-white border-none focus:ring-[#00a884] placeholder-gray-300"
+                                        : "bg-white text-black border border-gray-300 focus:ring-blue-500 placeholder-gray-500"
                                         }`}
                                 />
 
                                 <button
-                                    className={`px-2 py-1 rounded-md font-medium ${isDarkMode
+                                    className={`px-2 py-2 rounded-md font-medium transition duration-200 ${isDarkMode
                                         ? "bg-[#007c65] hover:bg-[#00a884] text-white"
                                         : "bg-blue-600 hover:bg-blue-700 text-white"
                                         }`}
@@ -136,8 +163,8 @@ const NoteList = () => {
                                     Register
                                 </button>
                             </div>
-                            <p className={`text-center mt-3 font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>Backup all your Notes in a google sheet</p>
-                        </>)}
+
+                        </div>)}
 
 
                     </div>

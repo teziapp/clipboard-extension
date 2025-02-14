@@ -37,6 +37,7 @@ export const SnippetProvider = ({ children }) => {
 
     const [userCreds, setUserCreds] = useState({})
     const [symbolDataSynced, setSymbolDataSynced] = useState(true)
+    const [notificationState, setNotificationState] = useState({})
 
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
@@ -54,6 +55,7 @@ export const SnippetProvider = ({ children }) => {
             val.userCreds?.sheetId ? setUserCreds(val.userCreds) : setUserCreds({})
         }
         )
+
     }, []);
 
     const addSnippet = (newSnippet) => {
@@ -149,7 +151,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced, notificationState, setNotificationState }}>
             {children}
         </SnippetContext.Provider>
     );
