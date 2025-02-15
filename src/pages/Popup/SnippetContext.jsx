@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
 
 const SnippetContext = createContext();
 
@@ -51,10 +52,18 @@ export const SnippetProvider = ({ children }) => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
         setSnippets(storedSnippets);
         loadTags();
+
         chrome.storage.local.get(["userCreds"]).then((val) => {
             val.userCreds?.sheetId ? setUserCreds(val.userCreds) : setUserCreds({})
         }
         )
+
+        if (navigator.onLine) {
+            chrome.runtime.sendMessage({ msg: 'isOnline' }, (res) => {
+                console.log('from', res)
+                res ? setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 }) : null
+            })
+        }
 
     }, []);
 

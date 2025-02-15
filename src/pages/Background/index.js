@@ -1,5 +1,5 @@
 import { db } from "../../Dexie/DexieStore";
-import { addNoteToSheet } from "../../Dexie/utils/sheetSyncHandlers";
+import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
 // import { seedSymbols, seedNotes, seedNegatives } from "./utils/seeder";
@@ -14,6 +14,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         db.symbols.toArray((symbols) => {
             db.negatives.toArray((negatives) => {
                 sendResponse({ symbols, negatives })
+            })
+        })
+        return true;
+    } else if (message.msg == 'isOnline') {
+        loadUnsynced().then((res1) => {
+            deleteUnsynced().then((res2) => {
+                sendResponse(res1 && res2)
             })
         })
         return true;
