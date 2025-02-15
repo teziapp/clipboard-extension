@@ -11,8 +11,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         symbolButtonClickHandler(message.payload)
     } else if (message.msg == 'requestedSymbolList') {
-        db.symbols.toArray((arr) => {
-            sendResponse(arr)
+        db.symbols.toArray((symbols) => {
+            db.negatives.toArray((negatives) => {
+                sendResponse({ symbols, negatives })
+            })
         })
         return true;
     }

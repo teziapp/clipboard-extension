@@ -94,6 +94,8 @@ const SymbolConfirmationMenu = () => {
                                         symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
                                     })
 
+                                    chrome.tabs.reload()
+
                                     navigate(`/activeNotes/${i.symId}`);
 
                                     const remoteUpdated = await addOrUpdateSymbolToSheet({
@@ -187,6 +189,8 @@ const SymbolConfirmationMenu = () => {
                                 color: "#FFD0A3"
                             };
                             const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
+
+                            chrome.tabs.reload()
 
                             navigate(
                                 `/activeNotes/${addedSymbol.symId}`

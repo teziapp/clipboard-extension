@@ -89,6 +89,8 @@ export const SymbolConflictMenu = () => {
 
                                     await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
+                                    chrome.tabs.reload()
+
                                     navigate(`/activeNotes/${i.symId}`);
 
                                     //Update negativesToSheet (below)
@@ -197,6 +199,8 @@ export const SymbolConflictMenu = () => {
                                 color: "#FF881A"
                             };
                             const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
+
+                            chrome.tabs.reload()
 
                             navigate(
                                 `/activeNotes/${addedSymbol.symId}`

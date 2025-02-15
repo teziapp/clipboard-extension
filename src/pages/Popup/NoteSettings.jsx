@@ -320,6 +320,8 @@ export const NoteSettings = () => {
 
                             navigate(`/activeNotes/${activeSymbolId}`)
 
+                            chrome.tabs.reload()
+
                             //Update on sheet (below)
                             const remoteUpdate = await addOrUpdateNegativesToSheet(negativeUrls)
 
@@ -390,6 +392,7 @@ export const NoteSettings = () => {
                         document.getElementById("deleteConfirmationDialogue").close()
                         setLoading(true)
                         await dexieStore.deleteSymbol(activeSymbol)
+                        chrome.tabs.reload()
                         setLoading(false)
                         navigate('/noteList/')
                     }}

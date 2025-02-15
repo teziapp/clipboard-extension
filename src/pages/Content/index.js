@@ -5,6 +5,7 @@ let cursorX;
 let cursorY;
 
 export let symbolsList = [];
+let negativesList
 export let observer;
 
 const flagButton = document.createElement('button')
@@ -86,7 +87,6 @@ const startObserving = () => {
         if (shouldTraverse && symbolsList.length) {
             clearTimeout(window.mutationDebounceId)
             window.mutationDebounceId = setTimeout(() => {
-                console.log('calling')
                 filterMatches(symbolsList)
             }, 100)
         }
@@ -102,14 +102,17 @@ const startObserving = () => {
 
 chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
 
-    if (!res?.length) {
+    if (!res?.symbols?.length) {
         console.log("Didn't recieve symbols")
         return;
     }
 
-    symbolsList = res;
+    symbolsList = res.symbols;
+    negativesList = res.negatives.filter((negative) => {
+        return negative.urls.find((url) => url.includes(window.location.href))
+    })
 
-    filterMatches(symbolsList)
+    filterMatches(symbolsList, res.negatives)
     startObserving()
 
 })

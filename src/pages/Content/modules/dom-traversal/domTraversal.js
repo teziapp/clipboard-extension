@@ -1,4 +1,4 @@
-export function filterMatches(symbolObjects, nodeToBeTraversed = document.body) {
+export function filterMatches(symbolObjects, negatives, nodeToBeTraversed = document.body) {
     console.log("ran")
     if (nodeToBeTraversed == document.body) {
         console.log("symbolsList")
@@ -10,6 +10,11 @@ export function filterMatches(symbolObjects, nodeToBeTraversed = document.body) 
     symbolObjects.forEach((symbolObj) => {
 
         symbolObj.symbols.forEach((symbol) => {
+            const isNegative = negatives.find((negative) => {
+                return negative.symId == symbolObj.symId && symbol.toLocaleLowerCase().replace(/[ .]/g, "") == negative.symbol
+            })
+
+            if (isNegative) return;
 
             let nodes = document.createTreeWalker(nodeToBeTraversed, NodeFilter.SHOW_TEXT, {
                 acceptNode: function (node) {
