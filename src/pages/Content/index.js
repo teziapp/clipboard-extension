@@ -1,5 +1,8 @@
 import { filterMatches } from "./modules/dom-traversal/domTraversal";
 
+const match = "http://localhost:3000/home.html".match(/^(?:https?:\/\/)?([^?#]+)/);
+console.log(match ? match[0] : "No match found");
+
 let currentSymbol
 let cursorX;
 let cursorY;
@@ -11,7 +14,7 @@ export let observer;
 const flagButton = document.createElement('button')
 flagButton.id = 'flagButton'
 flagButton.classList.add('hide')
-flagButton.textContent = '📌'
+flagButton.textContent = '📝'
 document.body.appendChild(flagButton)
 
 
@@ -65,6 +68,9 @@ document.body.onmouseup = (e) => {
     }
 }
 
+document.onselectionchange = () => {
+    flagButton.classList.add('hide')
+}
 
 const startObserving = () => {
 
@@ -87,7 +93,7 @@ const startObserving = () => {
         if (shouldTraverse && symbolsList.length) {
             clearTimeout(window.mutationDebounceId)
             window.mutationDebounceId = setTimeout(() => {
-                filterMatches(symbolsList)
+                filterMatches(symbolsList, negativesList)
             }, 100)
         }
 
@@ -109,10 +115,10 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
 
     symbolsList = res.symbols;
     negativesList = res.negatives.filter((negative) => {
-        return negative.urls.find((url) => url.includes(window.location.href))
+        return negative.urls.find((url) => (window.location.href).includes(url))
     })
-
-    filterMatches(symbolsList, res.negatives)
+    console.log('this..', window.location.href, negativesList)
+    filterMatches(symbolsList, negativesList)
     startObserving()
 
 })

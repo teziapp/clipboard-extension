@@ -78,7 +78,7 @@ const ActiveNotes = () => {
     //Notes functions
     const addNote = (content) => {
         const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
-        console.log(clickedSymbolPayload)
+
         const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds, url: clickedSymbolPayload.current.url, synced: 'false' };
         setActiveNotes((p) => [...p, newNote]);
 

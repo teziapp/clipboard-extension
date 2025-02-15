@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 export const SymbolConflictMenu = () => {
-    const { isDarkMode, clickedSymbolPayload } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, setSymbolDataSynced } = useSnippets();
 
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
@@ -66,7 +66,17 @@ export const SymbolConflictMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
+                                    setSymbolDataSynced(false)
 
+                                    //local Update Symbol
+                                    await dexieStore.updateSymbol({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        color: i.color,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    })
+
+                                    //Local update Negatives
                                     const negativeSymbols = symbolDisplay.filter((symbol) => symbol.symId != i.symId)
 
                                     const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
@@ -76,13 +86,13 @@ export const SymbolConflictMenu = () => {
                                         if (alreadyExists) {
                                             return {
                                                 ...alreadyExists,
-                                                urls: [...alreadyExists.urls, clickedSymbolPayload.current.url]
+                                                urls: [...alreadyExists.urls, clickedSymbolPayload.current.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]]
                                             }
                                         } else {
                                             return {
                                                 symId: negative.symId,
                                                 symbol: clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, ""),
-                                                urls: [clickedSymbolPayload.current.url]
+                                                urls: [clickedSymbolPayload.current.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]]
                                             }
                                         }
                                     })
@@ -93,6 +103,19 @@ export const SymbolConflictMenu = () => {
 
                                     navigate(`/activeNotes/${i.symId}`);
 
+                                    //Update symbol to sheet (below)
+                                    const remoteUpdated = await addOrUpdateSymbolToSheet({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    })
+
+                                    let syncStatusForSymbol = remoteUpdated != 'networkError' && remoteUpdated?.response?.result.status ? 'true' : 'false'
+
+                                    db.symbols.update(i.symId, { synced: syncStatusForSymbol })
+                                    //Update symbol to sheet (above)
+
+
                                     //Update negativesToSheet (below)
                                     const remoteUpdate = await addOrUpdateNegativesToSheet(toBeUpdatedNegatives)
 
@@ -100,6 +123,8 @@ export const SymbolConflictMenu = () => {
 
                                     await db.negatives.bulkPut(syncNegatives)
                                     //Update negativesToSheet (above)
+
+                                    syncNegatives.length ? (syncNegatives[0].synced === 'true' && syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null) : (syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null)
                                 }}
                             >
                                 Select

@@ -65,8 +65,8 @@ export function filterMatches(symbolObjects, negatives, nodeToBeTraversed = docu
                                 const flagButton = document.getElementById('flagButton')
 
                                 flagButton.classList.remove('hide')
-                                flagButton.style.top = span.getBoundingClientRect().y - 15 + "px"
-                                flagButton.style.left = span.getBoundingClientRect().x - 25 + "px"
+                                flagButton.style.top = span.getBoundingClientRect().y - 20 + "px"
+                                flagButton.style.left = span.getBoundingClientRect().x - 30 + "px"
 
                                 flagButton.removeEventListener("click", flagButton._clickHandler)
 

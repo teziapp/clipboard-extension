@@ -17,7 +17,7 @@ export const NoteSettings = () => {
     const [loading, setLoading] = useState(false)
     const [highlightColor, setHighlightColor] = useState("#FFD0A3")
 
-    const { isDarkMode, setSymbolDataSynced } = useSnippets()
+    const { isDarkMode, setSymbolDataSynced, setNotificationState } = useSnippets()
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -248,10 +248,6 @@ export const NoteSettings = () => {
                             <button
                                 onClick={() => {
                                     if (!negativeUrlInput || !document.getElementById("negativeUrlSymbolSelector").value) return;
-                                    if (!negativeUrlInput.match(/^https?:\/\/[^\/\s]+/)) {
-                                        alert("Enter a valid URL")
-                                        return;
-                                    }
                                     const negativeToBeUpdated = negativeUrls.find(
                                         (i) =>
                                             document
@@ -266,7 +262,7 @@ export const NoteSettings = () => {
                                             .getElementById("negativeUrlSymbolSelector")
                                             .value.toLocaleLowerCase()
                                             .replace(/[ .]/g, ""),
-                                        urls: [negativeUrlInput.match(/^https?:\/\/[^\/\s]+/)[0]],
+                                        urls: [negativeUrlInput.match(/^(?:https?:\/\/)?([^?#]+)/)[1]],
                                     };
 
                                     negativeToBeUpdated
@@ -274,7 +270,7 @@ export const NoteSettings = () => {
                                             ...prev.filter((i) => i.symbol !== negativeToBeUpdated.symbol),
                                             {
                                                 ...negativeToBeUpdated,
-                                                urls: [...negativeToBeUpdated.urls, negativeUrlInput.match(/^https?:\/\/[^\/\s]+/)[0]],
+                                                urls: [...negativeToBeUpdated.urls, negativeUrlInput.match(/^(?:https?:\/\/)?([^?#]+)/)[1]],
                                             },
                                         ])
                                         : setNegativeUrls((prev) => [...prev, negativeToBeAdded]);
@@ -354,8 +350,8 @@ export const NoteSettings = () => {
 
                             db.symbols.update(activeSymbolId, { synced: syncStatusForSymbol })
 
-                            syncNegatives.length ? (syncNegatives[0].synced === 'true' && syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null) : (syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null)
                             //update to sheet (above)
+                            syncNegatives.length ? (syncNegatives[0].synced === 'true' && syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null) : (syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null)
                         }}
                     >
                         Save
@@ -391,7 +387,9 @@ export const NoteSettings = () => {
                     <button onClick={async () => {
                         document.getElementById("deleteConfirmationDialogue").close()
                         setLoading(true)
-                        await dexieStore.deleteSymbol(activeSymbol)
+                        await dexieStore.deleteSymbol(activeSymbol).then((res) => {
+                            res.remoteDelete?.response?.result.status ? null : setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete chat from sheet -check your connection!' })
+                        })
                         chrome.tabs.reload()
                         setLoading(false)
                         navigate('/noteList/')

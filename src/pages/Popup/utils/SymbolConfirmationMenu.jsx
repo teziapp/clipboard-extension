@@ -91,6 +91,7 @@ const SymbolConfirmationMenu = () => {
                                     await dexieStore.updateSymbol({
                                         symId: i.symId,
                                         title: i.title,
+                                        color: i.color,
                                         symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
                                     })
 

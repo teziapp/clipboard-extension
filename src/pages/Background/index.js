@@ -27,10 +27,10 @@ async function symbolButtonClickHandler(payload) {
 
     const exactMatches = nearestSymbols.filter((symbol) => symbol.levenshteinDistance == 0)
 
-    exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', { exactMatch: exactMatches[0], url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0] }) : await openPopup('conflictOccurred', { exactMatches, url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0], clickedSymbol: payload.clickedSymbol })) : await openPopup('exactMatchNotFound', {
+    exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', { exactMatch: exactMatches[0], url: payload.url }) : await openPopup('conflictOccurred', { exactMatches, url: payload.url, clickedSymbol: payload.clickedSymbol })) : await openPopup('exactMatchNotFound', {
         nearestSymbols,
         clickedSymbol: payload.clickedSymbol,
-        url: payload.url.match(/^https?:\/\/[^\/\s]+/)[0] //The regex part will capture the base URL.. and remve the paths and params
+        url: payload.url
     })
 }
 
