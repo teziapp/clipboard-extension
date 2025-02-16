@@ -59,10 +59,7 @@ export const SnippetProvider = ({ children }) => {
         )
 
         if (navigator.onLine) {
-            chrome.runtime.sendMessage({ msg: 'isOnline' }, (res) => {
-                console.log('from', res)
-                res ? setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 }) : null
-            })
+            chrome.runtime.sendMessage({ msg: 'isOnline' })
         }
 
     }, []);

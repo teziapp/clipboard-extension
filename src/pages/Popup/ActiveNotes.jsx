@@ -55,6 +55,11 @@ const ActiveNotes = () => {
         })()
     }, [symbolDataSynced])
 
+    useEffect(() => {
+        chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+            clickedSymbolPayload.current.url = tabs[0].url
+        })
+    }, [])
 
     const { notes, groupedNotes } = useMemo(() => {
         const notes = activeNotes
@@ -193,8 +198,9 @@ const ActiveNotes = () => {
                                             className={`overflow-auto text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}
                                         >
                                             {note.content}
-                                            <span className={`block text-xs ${isDarkMode ? "text-gray-400" : ""}`}><a
+                                            <span className={`block text-xs w-44 whitespace-nowrap overflow-hidden text-ellipsis ${isDarkMode ? "text-gray-400" : ""}`}><a
                                                 href={note.url}
+                                                title={note.url}
                                                 target='_blank'
                                                 className='underline'>{note.url?.replace(/https?:\/\//, "") || ""}</a></span>
                                         </div>

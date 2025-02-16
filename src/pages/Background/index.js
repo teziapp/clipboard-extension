@@ -2,11 +2,6 @@ import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
-// import { seedSymbols, seedNotes, seedNegatives } from "./utils/seeder";
-// seedNegatives()
-// seedSymbols()
-// seedNotes()
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         symbolButtonClickHandler(message.payload)
@@ -18,12 +13,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
         return true;
     } else if (message.msg == 'isOnline') {
-        loadUnsynced().then((res1) => {
-            deleteUnsynced().then((res2) => {
-                sendResponse(res1 && res2)
-            })
+        loadUnsynced().then(() => {
+            deleteUnsynced().then()
         })
-        return true;
+
     }
 })
 
@@ -51,3 +44,32 @@ async function openPopup(msg, payload) {
         })
     }, 300)
 }
+
+function parseCSV(csv) {
+    const lines = csv.trim().split("\n");
+    const headers = lines[0].split(",").map(header => header.trim());
+
+    const data = lines.slice(1).map(line => {
+        const values = line.split(",").map(value => value.trim());
+        return { symbols: [values[0], values[6]], title: values[1], color: "#FFD0A3" }
+    });
+
+    return data;
+}
+
+async function loadCSV() {
+    try {
+        const response = await fetch("EQUITY_L.csv"); // Adjusted path
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        const csvText = await response.text();
+        const parsedData = parseCSV(csvText);
+
+        await db.symbols.bulkAdd(parsedData);
+        console.log("✅ Data successfully added to Dexie DB");
+    } catch (error) {
+        console.error("❌ Error loading CSV:", error);
+    }
+}
+
+loadCSV()

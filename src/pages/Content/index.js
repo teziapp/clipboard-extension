@@ -79,23 +79,23 @@ const startObserving = () => {
     }
 
     observer = new MutationObserver((mutations) => {
+
         let shouldTraverse;
         mutations.forEach((mutation) => {
             if (mutation.addedNodes?.length) {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE && !node.classList?.contains('levenshtineMatches')) {
-                        shouldTraverse = true;
+                        if (symbolsList.length) {
+                            clearTimeout(window.mutationDebounceId)
+                            window.mutationDebounceId = setTimeout(() => {
+                                filterMatches(symbolsList, negativesList, mutation.target)
+                            }, 100)
+                        }
                     }
                 })
             }
-        })
 
-        if (shouldTraverse && symbolsList.length) {
-            clearTimeout(window.mutationDebounceId)
-            window.mutationDebounceId = setTimeout(() => {
-                filterMatches(symbolsList, negativesList)
-            }, 100)
-        }
+        })
 
     })
 

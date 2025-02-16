@@ -1,4 +1,6 @@
-export function filterMatches(symbolObjects, negatives, nodeToBeTraversed = document.body) {
+export async function filterMatches(symbolObjects, negatives, nodeToBeTraversed = document.body) {
+    const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`))
+
     console.log("ran")
     if (nodeToBeTraversed == document.body) {
         console.log("symbolsList")
@@ -7,102 +9,102 @@ export function filterMatches(symbolObjects, negatives, nodeToBeTraversed = docu
         })
     }
 
-    symbolObjects.forEach((symbolObj) => {
 
-        symbolObj.symbols.forEach((symbol) => {
-            const isNegative = negatives.find((negative) => {
-                return negative.symId == symbolObj.symId && symbol.toLocaleLowerCase().replace(/[ .]/g, "") == negative.symbol
-            })
-
-            if (isNegative) return;
-
-            let nodes = document.createTreeWalker(nodeToBeTraversed, NodeFilter.SHOW_TEXT, {
-                acceptNode: function (node) {
-                    // Skip if parent is already highlighted or is a script/style
-                    if (node.parentNode.classList?.contains('levenshtineMatches') ||
-                        ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName)) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            });
-
-            let currentNode;
-            let nodesArray = [];
-
-            while (currentNode = nodes.nextNode()) {
-                nodesArray.push(currentNode)
+    let nodes = document.createTreeWalker(nodeToBeTraversed, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+            // Skip if parent is already highlighted or is a script/style
+            if (node.parentNode.classList?.contains('levenshtineMatches') ||
+                ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName)) {
+                return NodeFilter.FILTER_REJECT;
             }
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    });
 
+    let currentNode;
+    let nodesArray = [];
 
-            nodesArray.forEach((node) => {
-                //start
-                let text = node.nodeValue
+    while (currentNode = nodes.nextNode()) {
+        nodesArray.push(currentNode)
+    }
 
-                let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
-                let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
+    try {
+        symbolObjects?.forEach((symbolObj) => {
 
-                if (text.match(regex)) {
-                    const parts = text.split(regex)
-                    const frag = document.createDocumentFragment()
-                    console.log(parts)
+            symbolObj.symbols.forEach((symbol) => {
+                const isNegative = negSet.has(`${symbolObj.stmId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`)
 
-                    parts.forEach((part, index) => {
-                        if (index !== parts.length - 1) {
-                            frag.appendChild(document.createTextNode(part))
+                if (isNegative) return;
 
-                            const span = document.createElement('span')
+                nodesArray.forEach((node) => {
+                    //start
+                    let text = node.nodeValue
 
-                            span.style.background = symbolObj.color || 'orange'
-                            span.className = 'levenshtineMatches'
+                    let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
+                    let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
 
-                            span.innerHTML = symbol
+                    if (text.match(regex)) {
+                        const parts = text.split(regex)
+                        const frag = document.createDocumentFragment()
 
-                            frag.appendChild(span)
+                        parts.forEach((part, index) => {
+                            if (index !== parts.length - 1) {
+                                frag.appendChild(document.createTextNode(part))
 
-                            span.addEventListener('mouseover', () => {
+                                const span = document.createElement('span')
 
-                                const flagButton = document.getElementById('flagButton')
+                                span.style.background = symbolObj.color || 'orange'
+                                span.className = 'levenshtineMatches'
 
-                                flagButton.classList.remove('hide')
-                                flagButton.style.top = span.getBoundingClientRect().y - 20 + "px"
-                                flagButton.style.left = span.getBoundingClientRect().x - 30 + "px"
+                                span.innerHTML = symbol
 
-                                flagButton.removeEventListener("click", flagButton._clickHandler)
+                                frag.appendChild(span)
 
-                                flagButton._clickHandler = (e) => {
-                                    console.log(symbol)
-                                    e.preventDefault()
-                                    e.stopPropagation()
+                                span.addEventListener('mouseover', () => {
 
-                                    chrome.runtime.sendMessage({
-                                        msg: 'clickedSymbol', payload: {
-                                            clickedSymbol: symbol,
-                                            url: `${window.location.href}`
-                                        }
-                                    })
-                                }
+                                    const flagButton = document.getElementById('flagButton')
 
-                                flagButton.addEventListener('click', flagButton._clickHandler)
+                                    flagButton.classList.remove('hide')
+                                    flagButton.style.top = span.getBoundingClientRect().y - 20 + "px"
+                                    flagButton.style.left = span.getBoundingClientRect().x - 30 + "px"
 
-                            })
+                                    flagButton.removeEventListener("click", flagButton._clickHandler)
 
-                        } else {
-                            frag.appendChild(document.createTextNode(part))
-                        }
-                    })
+                                    flagButton._clickHandler = (e) => {
+                                        console.log(symbol)
+                                        e.preventDefault()
+                                        e.stopPropagation()
 
-                    node.parentNode?.replaceChild(frag, node)
+                                        chrome.runtime.sendMessage({
+                                            msg: 'clickedSymbol', payload: {
+                                                clickedSymbol: symbol,
+                                                url: `${window.location.href}`
+                                            }
+                                        })
+                                    }
 
+                                    flagButton.addEventListener('click', flagButton._clickHandler)
 
-                }
+                                })
+
+                            } else {
+                                frag.appendChild(document.createTextNode(part))
+                            }
+                        })
+
+                        node.parentElement.insertBefore(frag, node)
+                        node.textContent = ''
+
+                    }
+
+                })
 
             })
 
         })
-
-    })
-
+    } catch (error) {
+        console.log('this error..', error)
+    }
     //end
 
 

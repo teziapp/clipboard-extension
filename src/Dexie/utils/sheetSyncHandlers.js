@@ -1,7 +1,7 @@
 import { db } from "../DexieStore";
 
 const loadLocalChangeUrl = "https://script.googleapis.com/v1/scripts/AKfycbzivdE4nJo0D8b6Ze9oxkw1k6U3NyOHRs4cDzCIRvJ3haH9fXrkijL_iz3lxfI4WYY7:run"
-const backupToSheetUrl = "https://script.googleapis.com/v1/scripts/AKfycbzwZmblsJAekLq45mcg7hixrJBT-aPNlBkzp4IhF5ApqO_J-4wfrpk6ILy1bCR4ql0a:run"
+const backupToSheetUrl = "https://script.googleapis.com/v1/scripts/AKfycbzXnFVWl-EekDpAM0HMjq2uY7AHM5MrgImjnZsp6UED28PgPb0EzenwghvqnR3fK2iF:run"
 const populateLocalUrl = "https://script.googleapis.com/v1/scripts/AKfycbxxekxFWn2W7wjl6BIYlF546C0oaQJJvvGYXzr8K__k9erTT8hVKZAsoNITGfa0xB30:run"
 
 async function getCreds() {
@@ -167,7 +167,7 @@ export async function loadUnsynced() {
             console.log('cant fetch..', err)
             return;
         })
-
+        console.log(loadNotesResult)
         loadNotesResult?.response?.result.status ? await db.notes.bulkPut(unSyncedNotes.map(note => ({ ...note, synced: 'true' }))) : null
     }
 
@@ -233,68 +233,76 @@ export async function deleteUnsynced() {
     //Notes
     const deleteLogNotes = await db.deleteLog.where("type").equals("note").toArray()
 
-    const notesDeleteResult = await fetch(backupToSheetUrl, {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            function: "loadUnsynched",
-            parameters: [{ sheetId, message: "delete", table: 'Notes', payload: deleteLogNotes.map(({ object }) => ({ noteId: object.noteId })) }]
+    if (deleteLogNotes) {
+        const notesDeleteResult = await fetch(backupToSheetUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                function: "loadUnsynched",
+                parameters: [{ sheetId, message: "delete", table: 'Notes', payload: deleteLogNotes.map(({ object }) => ({ noteId: object.noteId })) }]
+            })
+        }).then((data) => {
+            return data.json()
+        }).catch((err) => {
+            console.log('cant fetch..', err)
+            return;
         })
-    }).then((data) => {
-        return data.json()
-    }).catch((err) => {
-        console.log('cant fetch..', err)
-        return;
-    })
 
-    notesDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("note").delete() : console.log('error while backingUp', notesDeleteResult)
+        notesDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("note").delete() : console.log('error while backingUp', notesDeleteResult)
+    }
+
 
     //Symbols
     const deleteLogSymbols = await db.deleteLog.where("type").equals("symbol").toArray()
-
-    const symbolsDeleteResult = await fetch(backupToSheetUrl, {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            function: "loadUnsynched",
-            parameters: [{ sheetId, message: "delete", table: 'Symbols', payload: deleteLogSymbols.map(({ object }) => ({ symId: object.symId })) }]
+    if (deleteLogSymbols) {
+        const symbolsDeleteResult = await fetch(backupToSheetUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                function: "loadUnsynched",
+                parameters: [{ sheetId, message: "delete", table: 'Symbols', payload: deleteLogSymbols.map(({ object }) => ({ symId: object.symId })) }]
+            })
+        }).then((data) => {
+            return data.json()
+        }).catch((err) => {
+            console.log('cant fetch..', err)
+            return;
         })
-    }).then((data) => {
-        return data.json()
-    }).catch((err) => {
-        console.log('cant fetch..', err)
-        return;
-    })
 
-    symbolsDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("symbol").delete() : console.log('error while backingUp', symbolsDeleteResult)
+        symbolsDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("symbol").delete() : console.log('error while backingUp', symbolsDeleteResult)
+    }
+
 
     //Negatives
     const deleteLogNegatives = await db.deleteLog.where("type").equals("negative").toArray()
 
-    const negativesDeleteResult = await fetch(backupToSheetUrl, {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            function: "loadUnsynched",
-            parameters: [{ sheetId, message: "delete", table: 'Negatives', payload: deleteLogNegatives.map(({ object }) => ({ symId: object.symId, symbol: object.symbol })) }]
+    if (deleteLogNegatives) {
+        const negativesDeleteResult = await fetch(backupToSheetUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                function: "loadUnsynched",
+                parameters: [{ sheetId, message: "delete", table: 'Negatives', payload: deleteLogNegatives.map(({ object }) => ({ symId: object.symId, symbol: object.symbol })) }]
+            })
+        }).then((data) => {
+            return data.json()
+        }).catch((err) => {
+            console.log('cant fetch..', err)
+            return;
         })
-    }).then((data) => {
-        return data.json()
-    }).catch((err) => {
-        console.log('cant fetch..', err)
-        return;
-    })
 
-    negativesDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("negative").delete() : console.log('error while backingUp', negativesDeleteResult)
+        negativesDeleteResult?.response?.result.status ? await db.deleteLog.where("type").equals("negative").delete() : console.log('error while backingUp', negativesDeleteResult)
+    }
+
 
     return (!deleteLogNotes || notesDeleteResult?.response?.result.status) && (!deleteLogSymbols || symbolsDeleteResult?.response?.result.status) && (!deleteLogNegatives || negativesDeleteResult?.response?.result.status)
 }
