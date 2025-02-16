@@ -2,9 +2,19 @@ import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
+let exactMatches;
+let nearestSymbols;
+let clickedSymbolPayload;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
-        symbolButtonClickHandler(message.payload)
+        clickedSymbolPayload = message.payload
+        symbolButtonClickHandler(message.payload).then((res) => {
+            console.log(res)
+            exactMatches = res.exactMatches
+            nearestSymbols = res.nearestSymbols
+            chrome.action.openPopup()
+        })
     } else if (message.msg == 'requestedSymbolList') {
         db.symbols.toArray((symbols) => {
             db.negatives.toArray((negatives) => {
@@ -17,6 +27,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             deleteUnsynced().then()
         })
 
+    } else if (message.msg == 'popupOpened') {
+        exactMatches.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
+            msg: 'exactMatchNotFound', payload: {
+                nearestSymbols,
+                clickedSymbol: clickedSymbolPayload.clickedSymbol,
+                url: clickedSymbolPayload.url
+            }
+        })
+        return true
     }
 })
 
@@ -27,16 +46,11 @@ async function symbolButtonClickHandler(payload) {
 
     const exactMatches = nearestSymbols.filter((symbol) => symbol.levenshteinDistance == 0)
 
-    exactMatches.length ? (exactMatches.length == 1 ? await openPopup('exactMatchFound', { exactMatch: exactMatches[0], url: payload.url }) : await openPopup('conflictOccurred', { exactMatches, url: payload.url, clickedSymbol: payload.clickedSymbol })) : await openPopup('exactMatchNotFound', {
-        nearestSymbols,
-        clickedSymbol: payload.clickedSymbol,
-        url: payload.url
-    })
+    return { nearestSymbols, exactMatches }
 }
 
 //it will open the popup and send a message in runtime with the required payload
-async function openPopup(msg, payload) {
-    chrome.action.openPopup()
+async function sendToPopup(msg, payload) {
     return setTimeout(() => {
         chrome.runtime.sendMessage({
             msg,

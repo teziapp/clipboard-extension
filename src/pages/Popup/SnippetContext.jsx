@@ -17,25 +17,6 @@ export const SnippetProvider = ({ children }) => {
         url: ""
     })
 
-    chrome.runtime.onMessage.addListener((message) => {
-        switch (message.msg) {
-            case 'exactMatchFound':
-                clickedSymbolPayload.current = message.payload
-                navigate(`/activeNotes/${message.payload.exactMatch.symId}`)
-                break;
-
-            case 'exactMatchNotFound':
-                clickedSymbolPayload.current = message.payload
-                navigate('/symbolConfirmationMenu')
-                break;
-
-            case 'conflictOccurred':
-                clickedSymbolPayload.current = message.payload
-                navigate('/symbolConflictMenu/')
-                break;
-        }
-    })
-
     const [userCreds, setUserCreds] = useState({})
     const [symbolDataSynced, setSymbolDataSynced] = useState(true)
     const [notificationState, setNotificationState] = useState({})
@@ -61,6 +42,27 @@ export const SnippetProvider = ({ children }) => {
         if (navigator.onLine) {
             chrome.runtime.sendMessage({ msg: 'isOnline' })
         }
+
+        chrome.runtime.sendMessage({ msg: 'popupOpened' }, (res) => {
+            if (!res) return;
+            switch (res.msg) {
+                case 'exactMatchFound':
+                    clickedSymbolPayload.current = res.payload
+                    navigate(`/activeNotes/${res.payload.exactMatch.symId}`)
+                    break;
+
+                case 'exactMatchNotFound':
+                    clickedSymbolPayload.current = res.payload
+                    navigate('/symbolConfirmationMenu')
+                    break;
+
+                case 'conflictOccurred':
+                    clickedSymbolPayload.current = res.payload
+                    navigate('/symbolConflictMenu/')
+                    break;
+            }
+
+        })
 
     }, []);
 
