@@ -1,4 +1,4 @@
-import { DownloadCloudIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2 } from 'lucide-react';
+import { Download, DownloadCloudIcon, DownloadIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
@@ -23,7 +23,7 @@ const ImportIcon = () => (
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds } = useSnippets();
+  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState } = useSnippets();
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -99,11 +99,11 @@ const Settings = () => {
 
     const setup = await InitialUserSetup()
     if (setup == 'doneSetup') {
-      alert('Registration successful!')
+      setNotificationState({ show: true, type: 'success', text: 'Registration successful!', duration: 3000 })
       chrome.storage.local.get(["userCreds"]).then((val) => {
         setUserCreds(val.userCreds)
       })
-    } else { alert('Oops.. something went wrong!') }
+    } else { setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong! -check your connection!', duration: 3000 }) }
 
     setLoading(false)
   }
@@ -117,6 +117,7 @@ const Settings = () => {
 
     chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
       setUserCreds({ sheetId })
+      setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
     })
 
     setLoading(false)
@@ -140,7 +141,7 @@ const Settings = () => {
           <ImportIcon />
         </button>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <span>Import data</span>
         <label className="text-blue-500 hover:text-blue-600 cursor-pointer">
           <ExportIcon />
@@ -153,6 +154,33 @@ const Settings = () => {
           />
         </label>
       </div>
+      <div className="flex items-center justify-between mb-2">
+        <span>Load NSE symbols</span>
+        <label>
+          <button className=" text-blue-500 hover:text-blue-600 cursor-pointer hover:bg-gray-200 rounded-md"
+            onClick={() => {
+              dexieStore.loadNseSymbols().then(() => {
+                setNotificationState({ show: true, type: 'success', text: 'NSE symbols loaded!', duration: 3000 })
+              })
+            }}>
+            <Download></Download>
+          </button>
+        </label>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Delete NSE symbols</span>
+        <label>
+          <button className="text-blue-500 hover:text-blue-600 cursor-pointer hover:bg-gray-200 rounded-md"
+            onClick={() => {
+              dexieStore.deleteNseSymbol().then(() => {
+                setNotificationState({ show: true, type: 'success', text: 'NSE symbols deleted!', duration: 3000 })
+              })
+            }}>
+            <Trash2Icon></Trash2Icon>
+          </button>
+        </label>
+      </div>
+
       {importError && <p className="text-red-500 mt-2">{importError}</p>}
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Other settings</h3>
@@ -261,21 +289,21 @@ const Settings = () => {
 
               await loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
-                  alert('something went wrong while backing up - check your coonection!!')
+                  setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while backing up -check your coonection!!', duration: 3000 })
                   return
                 }
 
                 deleteUnsynced().then((res2) => {
                   if (!res2 || res2 == 'networkError') {
-                    alert('something went wrong while backing up - check your connection!')
+                    setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while backing up -check your coonection!!', duration: 3000 })
                     return
                   }
 
-                  alert('synced data successfully')
+                  setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 })
+                  setLoading(false)
                 })
               }).catch(err => console.log(err))
 
-              setLoading(false)
             }}>{<RefreshCcwIcon size={18}></RefreshCcwIcon>}</button>
         </div>
 
@@ -288,7 +316,7 @@ const Settings = () => {
             onClick={async () => {
               setLoading(true)
               await dexieStore.populateLocal().then((res) => {
-                res ? alert("Loaded Data to Local Successfully!") : alert("Oops.. something went wrong!")
+                res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while loading -check your coonection!!', duration: 3000 })
               })
               setLoading(false)
             }}>{<DownloadCloudIcon size={18}></DownloadCloudIcon>}</button>

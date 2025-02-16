@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { db, dexieStore } from '../../Dexie/DexieStore';
 import { formatDate } from './utils/formatDate';
 import cuid from 'cuid';
-import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
+import { addOrUpdateSymbolToSheet, deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
 import { Loading } from './utils/Loading';
 
 
@@ -105,6 +105,16 @@ const ActiveNotes = () => {
             }
         });
 
+        //to sync the default NSE symbol only if user take note on One 
+        if (!activeNotes.length && !activeSymbol.synced) {
+            addOrUpdateSymbolToSheet(activeSymbol).then((res) => {
+                if (res != 'networkError' && res?.response?.result.status) {
+                    dexieStore.updateSymbol({ ...activeSymbol, synced: 'true' })
+                } else {
+                    dexieStore.updateSymbol({ ...activeSymbol, synced: 'false' })
+                }
+            })
+        }
     };
 
     const deleteNote = (note) => {

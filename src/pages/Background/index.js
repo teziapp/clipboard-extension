@@ -10,7 +10,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         clickedSymbolPayload = message.payload
         symbolButtonClickHandler(message.payload).then((res) => {
-            console.log(res)
             exactMatches = res.exactMatches
             nearestSymbols = res.nearestSymbols
             chrome.action.openPopup()
@@ -23,11 +22,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
         return true;
     } else if (message.msg == 'isOnline') {
-        loadUnsynced().then(() => {
-            deleteUnsynced().then()
+        loadUnsynced().then((res1) => {
+            if (!res1 || res1 == 'networkError') {
+                sendResponse('error')
+                return;
+            }
+
+            deleteUnsynced().then((res2) => {
+                if (!res2 || res2 == 'networkError') {
+                    sendResponse('error')
+                    return;
+                }
+
+                sendResponse('success')
+            })
         })
 
+        return true;
+
     } else if (message.msg == 'popupOpened') {
+        if (!clickedSymbolPayload) return;
         exactMatches.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
             msg: 'exactMatchNotFound', payload: {
                 nearestSymbols,
@@ -35,6 +49,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 url: clickedSymbolPayload.url
             }
         })
+        exactMatches = null;
+        nearestSymbols = null;
+        clickedSymbolPayload = null;
         return true
     }
 })
@@ -48,42 +65,3 @@ async function symbolButtonClickHandler(payload) {
 
     return { nearestSymbols, exactMatches }
 }
-
-//it will open the popup and send a message in runtime with the required payload
-async function sendToPopup(msg, payload) {
-    return setTimeout(() => {
-        chrome.runtime.sendMessage({
-            msg,
-            payload
-        })
-    }, 300)
-}
-
-function parseCSV(csv) {
-    const lines = csv.trim().split("\n");
-    const headers = lines[0].split(",").map(header => header.trim());
-
-    const data = lines.slice(1).map(line => {
-        const values = line.split(",").map(value => value.trim());
-        return { symbols: [values[0], values[6]], title: values[1], color: "#FFD0A3" }
-    });
-
-    return data;
-}
-
-async function loadCSV() {
-    try {
-        const response = await fetch("EQUITY_L.csv"); // Adjusted path
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-        const csvText = await response.text();
-        const parsedData = parseCSV(csvText);
-
-        await db.symbols.bulkAdd(parsedData);
-        console.log("✅ Data successfully added to Dexie DB");
-    } catch (error) {
-        console.error("❌ Error loading CSV:", error);
-    }
-}
-
-loadCSV()

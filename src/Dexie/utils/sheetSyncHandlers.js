@@ -230,11 +230,13 @@ export async function deleteUnsynced() {
     if (!sheetId) return;
     if (!token) return 'networkError';
 
+    let notesDeleteResult, symbolsDeleteResult, negativesDeleteResult;
+
     //Notes
     const deleteLogNotes = await db.deleteLog.where("type").equals("note").toArray()
 
     if (deleteLogNotes) {
-        const notesDeleteResult = await fetch(backupToSheetUrl, {
+        notesDeleteResult = await fetch(backupToSheetUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -258,7 +260,7 @@ export async function deleteUnsynced() {
     //Symbols
     const deleteLogSymbols = await db.deleteLog.where("type").equals("symbol").toArray()
     if (deleteLogSymbols) {
-        const symbolsDeleteResult = await fetch(backupToSheetUrl, {
+        symbolsDeleteResult = await fetch(backupToSheetUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -283,7 +285,7 @@ export async function deleteUnsynced() {
     const deleteLogNegatives = await db.deleteLog.where("type").equals("negative").toArray()
 
     if (deleteLogNegatives) {
-        const negativesDeleteResult = await fetch(backupToSheetUrl, {
+        negativesDeleteResult = await fetch(backupToSheetUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,

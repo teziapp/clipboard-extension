@@ -6,7 +6,7 @@ import cuid from "cuid";
 export const db = new Dexie('User')
 
 db.version(1).stores({
-    symbols: "++symId, title, *symbols, synced",
+    symbols: "++symId, title, *symbols, synced, type", //type here means normal symbol or some other default loaded data like NSE.., 
     negatives: "[symId+symbol], *urls, synced",
     notes: "noteId, symId, content, date, synced",
     deleteLog: "++id, type"
@@ -68,7 +68,7 @@ export const dexieStore = {
 
     addNewSymbol: async (symbol) => {
 
-        const idOfAddedSymbol = await db.symbols.add({ ...symbol, synced: 'false' })
+        const idOfAddedSymbol = await db.symbols.add({ ...symbol, synced: 'false', type: 'normal' })
 
         return { symId: idOfAddedSymbol, ...symbol }
     },
@@ -159,5 +159,30 @@ export const dexieStore = {
 
         console.log('Error while populating local..', notesArrayResult, symbolsArrayResult, negativesArrayResult)
         return false
+    },
+
+    loadNseSymbols: async () => {
+        try {
+            const response = await fetch("EQUITY_L.csv"); // Adjusted path
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const csvText = await response.text();
+
+            const lines = csvText.trim().split("\n");
+
+            const data = lines.slice(1).map(line => {
+                const values = line.split(",").map(value => value.trim());
+                return { symbols: [values[0], values[6]], title: values[1], color: "#FFFDD0", type: 'nse' }
+            })
+
+            await db.symbols.bulkAdd(data);
+            console.log("Data successfully added to Dexie DB");
+        } catch (error) {
+            console.error("Error loading CSV:", error);
+        }
+    },
+
+    deleteNseSymbol: async () => {
+        await db.symbols.where('type').equals('nse').and((symbol => !symbol.synced)).delete()
     }
 }

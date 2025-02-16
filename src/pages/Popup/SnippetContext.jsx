@@ -27,7 +27,6 @@ export const SnippetProvider = ({ children }) => {
         const savedMode = localStorage.getItem('darkMode');
         return savedMode ? JSON.parse(savedMode) : false;
     })
-    const [storedSymbols, setStoredSymbols] = useState([])
 
     useEffect(() => {
         const storedSnippets = JSON.parse(localStorage.getItem('snippets') || '[]');
@@ -40,7 +39,12 @@ export const SnippetProvider = ({ children }) => {
         )
 
         if (navigator.onLine) {
-            chrome.runtime.sendMessage({ msg: 'isOnline' })
+            setSymbolDataSynced('syncing')
+            chrome.runtime.sendMessage({ msg: 'isOnline' }, (res) => {
+                console.log(res)
+                if (!res) return;
+                res == 'success' ? setSymbolDataSynced(true) : null
+            })
         }
 
         chrome.runtime.sendMessage({ msg: 'popupOpened' }, (res) => {
@@ -159,7 +163,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, storedSymbols, setStoredSymbols, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced, notificationState, setNotificationState }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced, notificationState, setNotificationState }}>
             {children}
         </SnippetContext.Provider>
     );
