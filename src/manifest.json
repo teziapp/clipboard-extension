@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Fin-Friend",
-  "description": "Tool to help make the world of Financial Managers easy.",
+  "name": "Note-it",
+  "description": "Tool to help make the world of Financial Managers & Knowledge-miners easy.",
   "background": {
     "service_worker": "background.bundle.js"
   },
