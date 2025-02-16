@@ -131,7 +131,7 @@ const NoteList = () => {
                                 {/* Note Info */}
                                 <div className="pl-2 w-20 flex-1">
                                     <div className="flex justify-between">
-                                        <span className={`overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                                        <span className={`overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm w-32 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                                             {currentSymbol?.title}
                                         </span>
                                         <span className={`ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

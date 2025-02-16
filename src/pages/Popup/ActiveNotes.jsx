@@ -47,6 +47,7 @@ const ActiveNotes = () => {
                 storedNegatives.find(negative => negative?.synced == 'false') ||
                 deleteLogData.find((i) => i?.object?.symId == storedActiveSymbol.symId)
             ) {
+                if (symbolDataSynced === 'syncing') return;
                 setSymbolDataSynced(false)
             } else {
                 setSymbolDataSynced(true)
@@ -82,9 +83,7 @@ const ActiveNotes = () => {
 
     //Notes functions
     const addNote = (content) => {
-        const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000); //timeZoneOffset compares local time-zone with default UTC value and returns no. of minutes ahead/behind
-
-        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: localMilliseconds, url: clickedSymbolPayload.current.url, synced: 'false' };
+        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: Date.now(), url: clickedSymbolPayload.current.url, synced: 'false' };
         setActiveNotes((p) => [...p, newNote]);
 
         setSyncProps({ strokeWidth: 1, color: "#A0A0A0" })
@@ -153,7 +152,7 @@ const ActiveNotes = () => {
                     </h1>
                     <br></br>
                     <div className='flex flex-row'>
-                        <span className={`text-xs ${isDarkMode ? (symbolDataSynced ? "text-green-600" : "text-red-500") : (symbolDataSynced ? "text-green-600" : "text-red-500")}`}>{symbolDataSynced ? "(Synced)" : <text title='Some Data migh not have loaded in sheet'>{"(Un-synced)"}</text>}</span>
+                        <span className={`text-xs ${isDarkMode ? (symbolDataSynced ? "text-green-600" : "text-red-500") : (symbolDataSynced ? "text-green-600" : "text-red-500")}`}>{symbolDataSynced === 'syncing' ? "(Syncing..)" : (symbolDataSynced ? "(Synced)" : <text title='Some Data migh not have loaded in sheet'>{"(Un-synced)"}</text>)}</span>
                         {!symbolDataSynced && <button className='ml-1 mt-0.5 text-gray-500 hover:text-sky-800'
                             onClick={async () => {
                                 setLoading(true)
@@ -219,7 +218,7 @@ const ActiveNotes = () => {
                                                 {note.noteId == recentNoteId ? <CheckCheck size={18} strokeWidth={syncProps.strokeWidth} color={syncProps.color}></CheckCheck> :
                                                     <CheckCheck size={18} strokeWidth={note.synced == 'true' ? 2 : 1} color={note.synced == 'true' ? "#239ed0" : "#A0A0A0"}></CheckCheck>}
                                                 <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                    {new Date(note.date).toISOString().split('T')[1].substring(0, 5)}
+                                                    {new Date(note.date + 5.5 * 60 * 60 * 1000).toISOString().split('T')[1].substring(0, 5)}
                                                 </span>
                                             </div>
                                             <button
