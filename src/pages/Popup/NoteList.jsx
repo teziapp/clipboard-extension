@@ -101,7 +101,7 @@ const NoteList = () => {
             </div>
 
             {/* Notes List */}
-            <div id="allNotes-container" className="overflow-y-auto px-4">
+            <div id="allNotes-container" className="overflow-y-auto px-3">
                 {recentNotes.length > 0 ? (
                     recentNotes.map(({ symId, note }) => {
                         const currentSymbol = SymbolsDisplay.find((ele) => ele.symId == symId)
@@ -118,7 +118,7 @@ const NoteList = () => {
                             >
                                 {/* Profile Picture */}
                                 <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center ${isDarkMode
                                         ? 'bg-gradient-to-br from-[#3c6255] to-[#0b4f40]'
                                         : 'bg-gradient-to-br from-[#85c496] to-[#1e5f2f]'
                                         }`}
@@ -134,7 +134,7 @@ const NoteList = () => {
                                         <span className={`overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm w-32 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                                             {currentSymbol?.title}
                                         </span>
-                                        <span className={`ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        <span className={`ml-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                             {formatDate(note.date)}
                                         </span>
                                     </div>

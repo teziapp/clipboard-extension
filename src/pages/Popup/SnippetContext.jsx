@@ -41,7 +41,6 @@ export const SnippetProvider = ({ children }) => {
         if (navigator.onLine) {
             setSymbolDataSynced('syncing')
             chrome.runtime.sendMessage({ msg: 'isOnline' }, (res) => {
-                console.log(res)
                 if (!res) return;
                 res == 'success' ? setSymbolDataSynced(true) : null
             })
@@ -64,6 +63,7 @@ export const SnippetProvider = ({ children }) => {
                     clickedSymbolPayload.current = res.payload
                     navigate('/symbolConflictMenu/')
                     break;
+                case 'url':
             }
 
         })

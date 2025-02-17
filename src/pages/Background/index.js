@@ -41,7 +41,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
 
     } else if (message.msg == 'popupOpened') {
-        if (!clickedSymbolPayload) return;
+        if (!clickedSymbolPayload) {
+            //sendResponse(window)
+            return;
+        }
         exactMatches.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
             msg: 'exactMatchNotFound', payload: {
                 nearestSymbols,

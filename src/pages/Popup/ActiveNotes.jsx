@@ -57,9 +57,13 @@ const ActiveNotes = () => {
     }, [symbolDataSynced])
 
     useEffect(() => {
+        document.getElementById('chatInput').focus()
         chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-            clickedSymbolPayload.current.url = tabs[0].url
+            chrome.tabs.sendMessage(tabs[0].id, { msg: "getUrl" }, (res) => {
+                clickedSymbolPayload.current.url = res
+            });
         })
+
     }, [])
 
     const { notes, groupedNotes } = useMemo(() => {
@@ -249,6 +253,7 @@ const ActiveNotes = () => {
                     }`}
             >
                 <input
+                    id='chatInput'
                     type="text"
                     placeholder="Take a note"
                     className={`flex-grow px-3 py-2 rounded-full text-sm outline-none ${isDarkMode ? 'bg-[#3c484f] text-gray-200 placeholder-gray-400' : 'bg-[#ffffff] text-gray-800 placeholder-gray-500'
