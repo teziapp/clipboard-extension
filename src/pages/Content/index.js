@@ -103,7 +103,7 @@ const startObserving = () => {
 }
 
 
-chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
+chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.href }, (res) => {
     if (!res?.symbols?.length) {
         console.log("Didn't recieve symbols")
         return;

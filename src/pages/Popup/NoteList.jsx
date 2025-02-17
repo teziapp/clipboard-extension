@@ -10,7 +10,7 @@ import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 const NoteList = () => {
     const navigate = useNavigate()
 
-    const { isDarkMode, userCreds, setUserCreds } = useSnippets();
+    const { isDarkMode, userCreds, setUserCreds, setNotificationState } = useSnippets();
 
     const storedSymbols = useRef([])
     const [SymbolsDisplay, setSymbolsDisplay] = useState([])
@@ -47,16 +47,16 @@ const NoteList = () => {
     }, [searchChatsInput])
 
     async function registerSheetUrl() {
-        if (!sheetUrlInput) return alert('Enter a valid URL.');
+        if (!sheetUrlInput) returnsetNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
         const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
-        if (!sheetId) return alert('Enter a valid URL.');
+        if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
 
         setLoading(true)
 
         chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
             setUserCreds({ sheetId })
         })
-
+        setNotificationState({ show: true, type: 'success', text: 'Registration Successful!', duration: 3000 })
         setLoading(false)
     }
 
@@ -65,11 +65,11 @@ const NoteList = () => {
 
         const setup = await InitialUserSetup()
         if (setup == 'doneSetup') {
-            alert('Registration successful!')
+            setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
             chrome.storage.local.get(["userCreds"]).then((val) => {
                 setUserCreds(val.userCreds)
             })
-        } else { alert('Oops.. something went wrong!') }
+        } else { setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 }) }
 
         setLoading(false)
     }

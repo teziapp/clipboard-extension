@@ -15,9 +15,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.action.openPopup()
         })
     } else if (message.msg == 'requestedSymbolList') {
-        db.symbols.toArray((symbols) => {
-            db.negatives.toArray((negatives) => {
-                sendResponse({ symbols, negatives })
+        chrome.storage.local.get(["blockedSites"]).then((val) => {
+            if (val.blockedSites?.includes(message.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
+            db.symbols.toArray((symbols) => {
+                db.negatives.toArray((negatives) => {
+                    sendResponse({ symbols, negatives })
+                })
             })
         })
         return true;

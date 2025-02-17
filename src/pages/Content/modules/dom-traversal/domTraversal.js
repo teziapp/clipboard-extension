@@ -31,7 +31,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
     try {
         tokensArray?.forEach(({ symbol, symbolObj }) => {
 
-            const isNegative = negSet.has(`${symbolObj.stmId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`)
+            const isNegative = negSet.has(`${symbolObj.symId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`)
 
             if (isNegative) return;
 
@@ -42,7 +42,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                 let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
                 let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
 
-                if (text.match(regex)) {
+                if (window.matchArr = text.match(regex)) {
                     const parts = text.split(regex)
                     const frag = document.createDocumentFragment()
 
@@ -55,7 +55,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                             span.style.background = symbolObj.color || 'orange'
                             span.className = 'levenshtineMatches'
 
-                            span.innerHTML = symbol
+                            span.innerHTML = window.matchArr[0]
 
                             frag.appendChild(span)
 

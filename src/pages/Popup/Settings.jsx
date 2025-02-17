@@ -1,4 +1,4 @@
-import { Download, DownloadCloudIcon, DownloadIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
+import { DotSquareIcon, Download, DownloadCloudIcon, DownloadIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
@@ -26,7 +26,14 @@ const Settings = () => {
   const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState } = useSnippets();
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
+  const [blockedSitesDisplay, setBlockedSitesDisplay] = useState([])
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    chrome.storage.local.get(["blockedSites"]).then((val) => {
+      setBlockedSitesDisplay(val.blockedSites || [])
+    })
+  }, [])
 
   const handleExport = () => {
 
@@ -109,9 +116,9 @@ const Settings = () => {
   }
 
   async function registerSheetUrl() {
-    if (!sheetUrlInput) return alert('Enter a valid URL.');
+    if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
     const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
-    if (!sheetId) return alert('Enter a valid URL.');
+    if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
 
     setLoading(true)
 
@@ -184,7 +191,7 @@ const Settings = () => {
       {importError && <p className="text-red-500 mt-2">{importError}</p>}
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Other settings</h3>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <span className="mr-2">{isDarkMode ? 'Dark mode' : 'Light mode'}</span>
         <label className="flex items-center cursor-pointer">
           <div className="relative">
@@ -208,6 +215,53 @@ const Settings = () => {
           </div>
         </label>
       </div>
+
+      <div className={`w-full ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
+        <div className="flex items-center justify-between mb-2">
+          <span className={`mr-2 ${isDarkMode ? "text-white" : "text-black"}`}>Block for this site</span>
+          <label className="flex items-center cursor-pointer">
+            <button
+              className={`text-red-600 hover:text-red-700 ${isDarkMode ? "text-gray-400" : "text-black"}`}
+              onClick={() => {
+                chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+                  chrome.tabs.sendMessage(tabs[0].id, { msg: "getUrl" }, (res) => {
+                    chrome.storage.local.get(["blockedSites"]).then((val) => {
+                      if (!res || val.blockedSites?.includes(res.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
+                      if (val.blockedSites) {
+                        chrome.storage.local.set({ blockedSites: [...val.blockedSites, res.match(/^(?:https?:\/\/)?([^?#]+)/)[1]] })
+                      } else {
+                        chrome.storage.local.set({ blockedSites: [res] })
+                      }
+                      setBlockedSitesDisplay((p) => [...p, res.match(/^(?:https?:\/\/)?([^?#]+)/)[1]])
+                    })
+                  })
+                })
+              }}
+            >
+              <DotSquareIcon size={24} />
+            </button>
+          </label>
+        </div>
+
+        <div>
+          {blockedSitesDisplay.map((url) => (
+            <div key={url} className={`flex flex-row justify-between items-center mb-2 p-2 rounded-md ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}>
+              <span title={url} className={`w-40 underline cursor-pointer whitespace-nowrap text-ellipsis overflow-hidden hover:text-blue-400 ${isDarkMode ? "text-blue-300" : "text-blue-800"}`}><a href={'https://' + url} target='_blank'>{url}</a></span>
+              <button
+                className={`hover:text-red-500 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+                onClick={() => {
+                  const updatedSiteList = blockedSitesDisplay.filter((storedUrl) => url !== storedUrl)
+                  chrome.storage.local.set({ blockedSites: updatedSiteList })
+                  setBlockedSitesDisplay(updatedSiteList)
+                }}
+              >
+                <Trash2 size={19} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
 
       <div className={`w-full mt-3 ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
 

@@ -4,12 +4,23 @@ export const formatDate = (timestamp) => {
     // Convert to local time (IST automatically applied if your system is set to IST)
     const localDate = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
 
-    const today = new Date();
-    const yesterday = new Date();
+    const today = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
+    const yesterday = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
     yesterday.setDate(today.getDate() - 1);
 
-
-
-    return `${localDate.getDate()}-${localDate.getMonth() + 1}-${localDate.getFullYear()}`;
-
+    if (
+        localDate.getDate() === today.getDate() &&
+        localDate.getMonth() === today.getMonth() &&
+        localDate.getFullYear() === today.getFullYear()
+    ) {
+        return "Today";
+    } else if (
+        localDate.getDate() === yesterday.getDate() &&
+        localDate.getMonth() === yesterday.getMonth() &&
+        localDate.getFullYear() === yesterday.getFullYear()
+    ) {
+        return "Yesterday";
+    } else {
+        return `${localDate.getDate()}-${localDate.getMonth() + 1}-${localDate.getFullYear()}`;
+    }
 };
