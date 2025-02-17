@@ -223,19 +223,19 @@ const Settings = () => {
             <button
               className={`text-red-600 hover:text-red-700 ${isDarkMode ? "text-gray-400" : "text-black"}`}
               onClick={() => {
+
                 chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-                  chrome.tabs.sendMessage(tabs[0].id, { msg: "getUrl" }, (res) => {
-                    chrome.storage.local.get(["blockedSites"]).then((val) => {
-                      if (!res || val.blockedSites?.includes(res.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
-                      if (val.blockedSites) {
-                        chrome.storage.local.set({ blockedSites: [...val.blockedSites, res.match(/^(?:https?:\/\/)?([^?#]+)/)[1]] })
-                      } else {
-                        chrome.storage.local.set({ blockedSites: [res] })
-                      }
-                      setBlockedSitesDisplay((p) => [...p, res.match(/^(?:https?:\/\/)?([^?#]+)/)[1]])
-                    })
+                  chrome.storage.local.get(["blockedSites"]).then((val) => {
+                    if (!tabs[0].url || val.blockedSites?.includes(tabs[0].url.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
+                    if (val.blockedSites) {
+                      chrome.storage.local.set({ blockedSites: [...val.blockedSites, tabs[0].url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]] })
+                    } else {
+                      chrome.storage.local.set({ blockedSites: [tabs[0].url] })
+                    }
+                    setBlockedSitesDisplay((p) => [...p, tabs[0].url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]])
                   })
                 })
+
               }}
             >
               <DotSquareIcon size={24} />

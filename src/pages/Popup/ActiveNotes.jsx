@@ -59,9 +59,7 @@ const ActiveNotes = () => {
     useEffect(() => {
         document.getElementById('chatInput').focus()
         chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, { msg: "getUrl" }, (res) => {
-                clickedSymbolPayload.current.url = res
-            });
+            clickedSymbolPayload.current.url = tabs[0].url
         })
 
     }, [])
