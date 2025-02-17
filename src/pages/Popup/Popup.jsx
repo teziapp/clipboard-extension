@@ -11,6 +11,7 @@ import ActiveNotes from './ActiveNotes';
 import SymbolConfirmationMenu from './utils/SymbolConfirmationMenu';
 import { NoteSettings } from './NoteSettings';
 import { SymbolConflictMenu } from './utils/SymbolConflictMenu';
+import { Notification } from './utils/Notification';
 
 const Popup = () => {
 
@@ -50,6 +51,7 @@ const PopupContent = () => {
               <Route path='/symbolConflictMenu' element={<SymbolConflictMenu></SymbolConflictMenu>}></Route>
             </Routes>
           </div>
+          <Notification></Notification>
           <Navbar />
         </div>
       </SnippetProvider>

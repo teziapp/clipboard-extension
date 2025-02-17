@@ -1,23 +1,26 @@
 export const formatDate = (timestamp) => {
-    const localMilliseconds = Date.now() - (new Date().getTimezoneOffset() * 60000)
     const date = new Date(timestamp);
-    const today = new Date(localMilliseconds);
-    const yesterday = new Date();
+
+    // Convert to local time (IST automatically applied if your system is set to IST)
+    const localDate = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
+
+    const today = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
+    const yesterday = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
     yesterday.setDate(today.getDate() - 1);
 
     if (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
+        localDate.getDate() === today.getDate() &&
+        localDate.getMonth() === today.getMonth() &&
+        localDate.getFullYear() === today.getFullYear()
     ) {
         return "Today";
     } else if (
-        date.getDate() === yesterday.getDate() &&
-        date.getMonth() === yesterday.getMonth() &&
-        date.getFullYear() === yesterday.getFullYear()
+        localDate.getDate() === yesterday.getDate() &&
+        localDate.getMonth() === yesterday.getMonth() &&
+        localDate.getFullYear() === yesterday.getFullYear()
     ) {
         return "Yesterday";
     } else {
-        return `${date.getDate() - 1}-${date.getMonth() + 1}-${date.getFullYear()}`;
+        return `${localDate.getDate()}-${localDate.getMonth() + 1}-${localDate.getFullYear()}`;
     }
 };

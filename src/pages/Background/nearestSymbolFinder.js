@@ -8,7 +8,7 @@ import { closest, distance } from 'fastest-levenshtein';
 export default async function nearestSymbolFinder(payload) {
 
     const formattedClickedSymbol = payload.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")
-    const activeNegatives = await db.negatives.where({ 'urls': payload.url.match(/^https?:\/\/[^\/\s]+/)[0] }).toArray()
+    const activeNegatives = await db.negatives.where({ 'urls': payload.url?.match(/^(?:https?:\/\/)?([^?#]+)/) ? payload.url?.match(/^(?:https?:\/\/)?([^?#]+)/)[1] : 'garbage' }).toArray()
 
     const symbolData = await dexieStore.getSymbols() || '[]'
 

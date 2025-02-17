@@ -1,12 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { dexieStore } from "../../../Dexie/DexieStore";
+import { db, dexieStore } from "../../../Dexie/DexieStore";
 import { useState, useEffect } from "react";
 import { useSnippets } from "../SnippetContext";
 import { X } from "lucide-react";
+import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 export const SymbolConflictMenu = () => {
-    const { isDarkMode, clickedSymbolPayload } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, setSymbolDataSynced } = useSnippets();
 
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
@@ -65,7 +66,17 @@ export const SymbolConflictMenu = () => {
                                     : "bg-green-500 text-white hover:bg-green-600"
                                     }`}
                                 onClick={async () => {
+                                    setSymbolDataSynced(false)
 
+                                    //local Update Symbol
+                                    await dexieStore.updateSymbol({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        color: i.color,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    })
+
+                                    //Local update Negatives
                                     const negativeSymbols = symbolDisplay.filter((symbol) => symbol.symId != i.symId)
 
                                     const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
@@ -75,20 +86,45 @@ export const SymbolConflictMenu = () => {
                                         if (alreadyExists) {
                                             return {
                                                 ...alreadyExists,
-                                                urls: [...alreadyExists.urls, clickedSymbolPayload.current.url]
+                                                urls: [...alreadyExists.urls, clickedSymbolPayload.current.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]]
                                             }
                                         } else {
                                             return {
                                                 symId: negative.symId,
                                                 symbol: clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, ""),
-                                                urls: [clickedSymbolPayload.current.url]
+                                                urls: [clickedSymbolPayload.current.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1]]
                                             }
                                         }
                                     })
 
                                     await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
+                                    chrome.tabs.reload()
+
                                     navigate(`/activeNotes/${i.symId}`);
+
+                                    //Update symbol to sheet (below)
+                                    const remoteUpdated = await addOrUpdateSymbolToSheet({
+                                        symId: i.symId,
+                                        title: i.title,
+                                        symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    })
+
+                                    let syncStatusForSymbol = remoteUpdated != 'networkError' && remoteUpdated?.response?.result.status ? 'true' : 'false'
+
+                                    db.symbols.update(i.symId, { synced: syncStatusForSymbol })
+                                    //Update symbol to sheet (above)
+
+
+                                    //Update negativesToSheet (below)
+                                    const remoteUpdate = await addOrUpdateNegativesToSheet(toBeUpdatedNegatives)
+
+                                    let syncNegatives = toBeUpdatedNegatives.map((i) => ({ ...i, synced: remoteUpdate != 'networkError' && remoteUpdate?.response?.result.status ? 'true' : 'false' }))
+
+                                    await db.negatives.bulkPut(syncNegatives)
+                                    //Update negativesToSheet (above)
+
+                                    syncNegatives.length ? (syncNegatives[0].synced === 'true' && syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null) : (syncStatusForSymbol === 'true' ? setSymbolDataSynced(true) : null)
                                 }}
                             >
                                 Select
@@ -155,6 +191,8 @@ export const SymbolConflictMenu = () => {
                         onClick={async () => {
                             if (newTitle == "") return;
 
+                            document.getElementById("symbolConfimationDialogue").close();
+
                             const negativeSymbols = symbolDisplay
 
                             const storedNegatives = await dexieStore.getNegatives(negativeSymbols.map(e => [e.symId, clickedSymbolPayload.current.clickedSymbol.toLocaleLowerCase().replace(/[ .]/g, "")]))
@@ -178,16 +216,37 @@ export const SymbolConflictMenu = () => {
                             await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
 
+                            //Create Symbol
+
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                color: "#FF881A"
                             };
-                            const idOfAddedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded);
+                            const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
-                            document.getElementById("symbolConfimationDialogue").close();
+                            chrome.tabs.reload()
+
                             navigate(
-                                `/activeNotes/${idOfAddedSymbol}`
+                                `/activeNotes/${addedSymbol.symId}`
                             );
+
+                            //Update negativesToSheet (below)
+                            const remoteUpdate = await addOrUpdateNegativesToSheet(toBeUpdatedNegatives)
+
+                            let syncNegatives = toBeUpdatedNegatives.map((i) => ({ ...i, synced: remoteUpdate != 'networkError' && remoteUpdate?.response?.result.status ? 'true' : 'false' }))
+
+                            await db.negatives.bulkPut(syncNegatives)
+                            //Update negativesToSheet (above)
+
+                            //Updates symbol Data to sheet (below)
+                            const remoteAdded = await addOrUpdateSymbolToSheet(addedSymbol)
+
+                            let syncStatus = remoteAdded != 'networkError' && remoteAdded?.response?.result.status ? 'true' : 'false'
+
+                            await db.symbols.update(addedSymbol.symId, { synced: syncStatus })
+                            //Updates symbol Data to sheet (above)
+
                         }}
                         className={`w-full p-2 rounded-md font-semibold ${isDarkMode
                             ? "bg-[#00a884] text-white hover:bg-[#009175]"
