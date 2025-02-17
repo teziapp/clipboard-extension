@@ -172,7 +172,7 @@ export const dexieStore = {
 
             const data = lines.slice(1).map(line => {
                 const values = line.split(",").map(value => value.trim());
-                return { symbols: [values[0], values[6]], title: values[1], color: "#FFFDD0", type: 'nse' }
+                return { symbols: [values[1].replace('Limited', ''), values[0], values[6]], title: values[1], color: "#f7f7e9", type: 'nse' }
             })
 
             await db.symbols.bulkAdd(data);

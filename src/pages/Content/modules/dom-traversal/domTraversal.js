@@ -1,4 +1,4 @@
-export async function filterMatches(symbolObjects, negatives, nodeToBeTraversed = document.body) {
+export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = document.body) {
     const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`))
 
     console.log("ran")
@@ -29,75 +29,72 @@ export async function filterMatches(symbolObjects, negatives, nodeToBeTraversed 
     }
 
     try {
-        symbolObjects?.forEach((symbolObj) => {
+        tokensArray?.forEach(({ symbol, symbolObj }) => {
 
-            symbolObj.symbols.forEach((symbol) => {
-                const isNegative = negSet.has(`${symbolObj.stmId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`)
+            const isNegative = negSet.has(`${symbolObj.stmId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`)
 
-                if (isNegative) return;
+            if (isNegative) return;
 
-                nodesArray.forEach((node) => {
-                    //start
-                    let text = node.nodeValue
+            nodesArray.forEach((node) => {
+                //start
+                let text = node.nodeValue
 
-                    let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
-                    let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
+                let regexPattern = symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*");
+                let regex = new RegExp(`\\b${regexPattern}\\b`, "i");
 
-                    if (text.match(regex)) {
-                        const parts = text.split(regex)
-                        const frag = document.createDocumentFragment()
+                if (text.match(regex)) {
+                    const parts = text.split(regex)
+                    const frag = document.createDocumentFragment()
 
-                        parts.forEach((part, index) => {
-                            if (index !== parts.length - 1) {
-                                frag.appendChild(document.createTextNode(part))
+                    parts.forEach((part, index) => {
+                        if (index !== parts.length - 1) {
+                            frag.appendChild(document.createTextNode(part))
 
-                                const span = document.createElement('span')
+                            const span = document.createElement('span')
 
-                                span.style.background = symbolObj.color || 'orange'
-                                span.className = 'levenshtineMatches'
+                            span.style.background = symbolObj.color || 'orange'
+                            span.className = 'levenshtineMatches'
 
-                                span.innerHTML = symbol
+                            span.innerHTML = symbol
 
-                                frag.appendChild(span)
+                            frag.appendChild(span)
 
-                                span.addEventListener('mouseover', () => {
+                            span.addEventListener('mouseover', () => {
 
-                                    const flagButton = document.getElementById('flagButton')
+                                const flagButton = document.getElementById('flagButton')
 
-                                    flagButton.classList.remove('hide')
-                                    flagButton.style.top = span.getBoundingClientRect().y - 20 + "px"
-                                    flagButton.style.left = span.getBoundingClientRect().x - 30 + "px"
+                                flagButton.classList.remove('hide')
+                                flagButton.style.top = span.getBoundingClientRect().y - 20 + "px"
+                                flagButton.style.left = span.getBoundingClientRect().x - 30 + "px"
 
-                                    flagButton.removeEventListener("click", flagButton._clickHandler)
+                                flagButton.removeEventListener("click", flagButton._clickHandler)
 
-                                    flagButton._clickHandler = (e) => {
-                                        console.log(symbol)
-                                        e.preventDefault()
-                                        e.stopPropagation()
+                                flagButton._clickHandler = (e) => {
+                                    console.log(symbol)
+                                    e.preventDefault()
+                                    e.stopPropagation()
 
-                                        chrome.runtime.sendMessage({
-                                            msg: 'clickedSymbol', payload: {
-                                                clickedSymbol: symbol,
-                                                url: `${window.location.href}`
-                                            }
-                                        })
-                                    }
+                                    chrome.runtime.sendMessage({
+                                        msg: 'clickedSymbol', payload: {
+                                            clickedSymbol: symbol,
+                                            url: `${window.location.href}`
+                                        }
+                                    })
+                                }
 
-                                    flagButton.addEventListener('click', flagButton._clickHandler)
+                                flagButton.addEventListener('click', flagButton._clickHandler)
 
-                                })
+                            })
 
-                            } else {
-                                frag.appendChild(document.createTextNode(part))
-                            }
-                        })
+                        } else {
+                            frag.appendChild(document.createTextNode(part))
+                        }
+                    })
 
-                        node.parentElement.insertBefore(frag, node)
-                        node.textContent = ''
+                    node.parentElement.insertBefore(frag, node)
+                    node.textContent = ''
 
-                    }
-
-                })
+                }
 
             })
 

@@ -1,8 +1,5 @@
 import { filterMatches } from "./modules/dom-traversal/domTraversal";
 
-const match = "http://localhost:3000/home.html".match(/^(?:https?:\/\/)?([^?#]+)/);
-console.log(match ? match[0] : "No match found");
-
 let currentSymbol
 let cursorX;
 let cursorY;
@@ -107,18 +104,29 @@ const startObserving = () => {
 
 
 chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
-
     if (!res?.symbols?.length) {
         console.log("Didn't recieve symbols")
         return;
     }
 
-    symbolsList = res.symbols;
+    res.symbols.forEach((symbolObj) => {
+        symbolObj.symbols.forEach((symbol) => {
+            symbolsList.push({ symbol, symbolObj: { symId: symbolObj.symId, color: symbolObj.color } })
+        })
+    })
+
     negativesList = res.negatives.filter((negative) => {
         return negative.urls.find((url) => (window.location.href).includes(url))
     })
-    console.log('this..', window.location.href, negativesList)
+
+    symbolsList.sort((a, b) => b.symbol.length - a.symbol.length)
     filterMatches(symbolsList, negativesList)
     startObserving()
 
+})
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.msg === 'getUrl') {
+        sendResponse(window.location.href)
+    }
 })
