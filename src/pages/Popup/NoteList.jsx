@@ -47,7 +47,7 @@ const NoteList = () => {
     }, [searchChatsInput])
 
     async function registerSheetUrl() {
-        if (!sheetUrlInput) returnsetNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
+        if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
         const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
         if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
 

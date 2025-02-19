@@ -57,11 +57,10 @@ const ActiveNotes = () => {
     }, [symbolDataSynced])
 
     useEffect(() => {
-        document.getElementById('chatInput').focus()
         chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
             clickedSymbolPayload.current.url = tabs[0].url
+            document.getElementById('chatInput').focus()
         })
-
     }, [])
 
     const { notes, groupedNotes } = useMemo(() => {
@@ -85,7 +84,9 @@ const ActiveNotes = () => {
 
     //Notes functions
     const addNote = (content) => {
-        const newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: Date.now(), url: clickedSymbolPayload.current.url, synced: 'false' };
+
+        let newNote = { noteId: cuid(), content, symId: activeSymbol.symId, date: Date.now(), url: clickedSymbolPayload.current.url, synced: 'false' };
+
         setActiveNotes((p) => [...p, newNote]);
 
         setSyncProps({ strokeWidth: 1, color: "#A0A0A0" })
@@ -137,12 +138,12 @@ const ActiveNotes = () => {
 
             {/* Header Section */}
             <div className={`flex items-start gap-3 px-3 py-3 shadow-md ${isDarkMode ? 'bg-[#202c33]' : 'bg-[#f0f2f5]'}`}>
-                <button className='float-right absolute right-3 text-gray-500 hover:text-gray-700'
+                {activeSymbol.symId !== 1000000 && <button className='float-right absolute right-3 text-gray-500 hover:text-gray-700'
                     onClick={() => {
                         navigate(`/noteSettings/${activeSymbol.symId}`)
                     }}>
                     <Settings size={20}></Settings>
-                </button>
+                </button>}
                 <ArrowLeft
                     className={`cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-[#008069] hover:text-[#006d57]'}`}
                     size={24}
@@ -160,13 +161,13 @@ const ActiveNotes = () => {
                                 setLoading(true)
                                 await loadUnsynced().then((res1) => {
                                     if (!res1 || res1 == 'networkError') {
-                                        alert('something went wrong while backing up - check your coonection!!')
+                                        setNotificationState({ show: true, type: 'failure', text: 'something went wrong while backing up - check your connection!', duration: 3000 })
                                         return
                                     }
 
                                     return deleteUnsynced().then((res2) => {
                                         if (!res2 || res2 == 'networkError') {
-                                            alert('something went wrong while backing up - check your connection!')
+                                            setNotificationState({ show: true, type: 'failure', text: 'something went wrong while backing up - check your connection!', duration: 3000 })
                                             return
                                         }
                                         setNotificationState({ show: true, text: 'Synced data successfully', type: 'success', duration: 3000 })
@@ -259,7 +260,6 @@ const ActiveNotes = () => {
                     value={noteContent}
                     onKeyDown={(e) => {
                         if (e.key == 'Enter') {
-                            if (!noteContent || noteContent.match(/^\s+$/)) return;
                             addNote(noteContent)
                             setNoteContent('');
                         }

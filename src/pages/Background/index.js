@@ -2,6 +2,8 @@ import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
+let openQuickNotes;
+
 let exactMatches;
 let nearestSymbols;
 let clickedSymbolPayload;
@@ -9,11 +11,16 @@ let clickedSymbolPayload;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.msg == 'clickedSymbol') {
         clickedSymbolPayload = message.payload
-        symbolButtonClickHandler(message.payload).then((res) => {
-            exactMatches = res.exactMatches
-            nearestSymbols = res.nearestSymbols
-            chrome.action.openPopup()
+
+        chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+            clickedSymbolPayload.url = tabs[0].url
+            symbolButtonClickHandler(clickedSymbolPayload).then((res) => {
+                exactMatches = res.exactMatches
+                nearestSymbols = res.nearestSymbols
+                chrome.action.openPopup()
+            })
         })
+
     } else if (message.msg == 'requestedSymbolList') {
         chrome.storage.local.get(["blockedSites"]).then((val) => {
             if (val.blockedSites?.includes(message.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
@@ -44,13 +51,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
 
     } else if (message.msg == 'popupOpened') {
+        console.log(clickedSymbolPayload)
         if (!clickedSymbolPayload) {
-            //sendResponse(window)
+            console.log('thissss')
+            if (openQuickNotes) {
+                sendResponse({
+                    msg: 'openQuickNotes'
+                })
+
+            }
             return;
         }
-        exactMatches.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
+        exactMatches?.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
             msg: 'exactMatchNotFound', payload: {
-                nearestSymbols,
+                nearestSymbols: nearestSymbols || [],
                 clickedSymbol: clickedSymbolPayload.clickedSymbol,
                 url: clickedSymbolPayload.url
             }
@@ -58,7 +72,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         exactMatches = null;
         nearestSymbols = null;
         clickedSymbolPayload = null;
+        openQuickNotes = false
         return true
+
+    } else if (message.msg == 'openQuickNotes') {
+
+        openQuickNotes = true;
+        chrome.action.openPopup()
     }
 })
 

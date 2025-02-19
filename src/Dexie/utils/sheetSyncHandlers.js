@@ -1,3 +1,4 @@
+import { getToken } from "../../pages/Background/utils/auth";
 import { db } from "../DexieStore";
 
 const loadLocalChangeUrl = "https://script.googleapis.com/v1/scripts/AKfycbzivdE4nJo0D8b6Ze9oxkw1k6U3NyOHRs4cDzCIRvJ3haH9fXrkijL_iz3lxfI4WYY7:run"
@@ -7,13 +8,7 @@ const populateLocalUrl = "https://script.googleapis.com/v1/scripts/AKfycbxxekxFW
 async function getCreds() {
     const sheetId = await chrome.storage.local.get(['userCreds']).then(({ userCreds }) => userCreds?.sheetId)
     if (!sheetId || !navigator.onLine) return { sheetId, token: null }; // handls unRegistered user whose token can't be generated
-    const token = await new Promise((res, rej) => {
-        chrome.identity.getAuthToken({
-            interactive: true
-        }, (token) => {
-            res(token)
-        })
-    })
+    const token = await getToken()
 
     return { sheetId, token }
 }

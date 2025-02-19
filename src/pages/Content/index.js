@@ -1,5 +1,7 @@
 import { filterMatches } from "./modules/dom-traversal/domTraversal";
 
+let ctrlKeyPressed;
+
 let currentSymbol
 let cursorX;
 let cursorY;
@@ -125,8 +127,22 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.hr
 
 })
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.msg === 'getUrl') {
-        sendResponse(window.location.href)
+window.onkeydown = (e) => {
+    console.log('dwn')
+    console.log(e.key)
+    if (e.ctrlKey && !ctrlKeyPressed) {
+        console.log('ctrl')
+        ctrlKeyPressed = true
+    } else if (e.key == "ArrowDown") {
+        console.log('sending')
+        ctrlKeyPressed ? chrome.runtime.sendMessage({ msg: 'openQuickNotes' }) : null
     }
-})
+}
+
+window.onkeyup = (e) => {
+    console.log(e.key)
+    if (e.key == 'Control' || e.key == "ArrowDown") {
+        console.log('up')
+        ctrlKeyPressed = false;
+    }
+}
