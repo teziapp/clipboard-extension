@@ -161,13 +161,13 @@ const ActiveNotes = () => {
                                 setLoading(true)
                                 await loadUnsynced().then((res1) => {
                                     if (!res1 || res1 == 'networkError') {
-                                        setNotificationState({ show: true, type: 'failure', text: 'something went wrong while backing up - check your connection!', duration: 3000 })
+                                        setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings') } })
                                         return
                                     }
 
                                     return deleteUnsynced().then((res2) => {
                                         if (!res2 || res2 == 'networkError') {
-                                            setNotificationState({ show: true, type: 'failure', text: 'something went wrong while backing up - check your connection!', duration: 3000 })
+                                            setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings') } })
                                             return
                                         }
                                         setNotificationState({ show: true, text: 'Synced data successfully', type: 'success', duration: 3000 })
