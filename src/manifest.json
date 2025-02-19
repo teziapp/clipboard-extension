@@ -45,10 +45,13 @@
     "tabs"
   ],
   "oauth2": {
-    "client_id": "650198074640-iecgvvc09dr0bgu6a6cqdc9obqsoch9n.apps.googleusercontent.com",
+    "client_id": "650198074640-ndskhk7q7u831es5bvjg4sc1s2e0rgn7.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/spreadsheets.currentonly",
       "https://www.googleapis.com/auth/drive.file"
     ]
-  }
+  },
+  "host_permissions": [
+    "https://tezi-extension.hamzaravani4.workers.dev/*"
+  ]
 }

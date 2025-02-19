@@ -2,6 +2,7 @@ import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
 
+
 let exactMatches;
 let nearestSymbols;
 let clickedSymbolPayload;

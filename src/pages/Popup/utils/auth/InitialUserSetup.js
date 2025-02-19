@@ -1,55 +1,47 @@
+import { getToken, onLaunchWebAuthFlow } from "../../../Background/utils/auth";
+
 async function InitialUserSetup() {
 
     //getAuthToken will get temporary access token which will be stored in local with the key named userCreds
-    return new Promise((resolve, reject) => {
 
-        if (!navigator.onLine) resolve('error')
-        chrome.identity.getAuthToken({
-            interactive: true
-        }, (token) => {
+    if (!navigator.onLine) return ('error')
 
-            if (!token) {
-                resolve('noToken')
-                return;
-            }
+    let result;
 
-            fetch(`https://script.googleapis.com/v1/scripts/AKfycbw8ZFnKnYCOa5d_B2JWGmDy_tcUwGGKTPODs68zN25u90vKip39-_XX0oDZ8w6tjrbE:run`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    function: "setupSheets",
-                    parameters: []
-                })
-            }).then((res) => {
+    await onLaunchWebAuthFlow()
+    const accessToken = await getToken()
 
-                res.json().then((jsonRes) => {
+    console.log(accessToken)
 
-                    if (jsonRes.response?.result.status) {
-                        console.log(jsonRes.response?.result.spreadsheetId)
-                        chrome.storage.local.set({   //if API call request goes fine, we will store the provided sheetId in userCreds 
-                            'userCreds': {
-                                sheetId: jsonRes.response?.result.spreadsheetId
-                            }
-                        }).then(() => {
-                            resolve('doneSetup')
-                        })
-                    } else {
-                        console.log('error in script..', jsonRes)
-                        resolve('error')
-                    }
-                })
-
-            }).catch((err) => {
-                console.log("error from fetch..", err)
-                resolve('error')
-            })
-
+    const res = await fetch(`https://script.googleapis.com/v1/scripts/AKfycbw8ZFnKnYCOa5d_B2JWGmDy_tcUwGGKTPODs68zN25u90vKip39-_XX0oDZ8w6tjrbE:run`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            function: "setupSheets",
+            parameters: []
         })
-
     })
+
+    const jsonRes = await res.json()
+
+    if (jsonRes.response?.result.status) {
+        await chrome.storage.local.set({   //if API call request goes fine, we will store the provided sheetId in userCreds 
+            'userCreds': {
+                sheetId: jsonRes.response?.result.spreadsheetId
+            }
+        }).then(() => {
+            result = 'doneSetup'
+        })
+    } else {
+        console.log('error in script..', jsonRes)
+        result = 'error'
+    }
+
+    return result
+
     // EDGE-CASE : is the above promise-chain properly handling all possible potential errors
 
 }
