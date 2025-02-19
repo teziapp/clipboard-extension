@@ -1,5 +1,6 @@
 {
   "manifest_version": 3,
+  "version": "6.1.4",
   "name": "Note-it",
   "description": "Tool to help make the world of Financial Managers & Knowledge-miners easy.",
   "background": {

@@ -48,6 +48,7 @@ export const SnippetProvider = ({ children }) => {
 
         chrome.runtime.sendMessage({ msg: 'popupOpened' }, (res) => {
             if (!res) return;
+            console.log(res)
             switch (res.msg) {
                 case 'exactMatchFound':
                     clickedSymbolPayload.current = res.payload
@@ -63,7 +64,8 @@ export const SnippetProvider = ({ children }) => {
                     clickedSymbolPayload.current = res.payload
                     navigate('/symbolConflictMenu/')
                     break;
-                case 'url':
+                case 'openQuickNotes':
+                    navigate(`/activeNotes/${1000000}`)
             }
 
         })

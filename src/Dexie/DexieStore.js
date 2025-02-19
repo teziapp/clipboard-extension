@@ -12,6 +12,12 @@ db.version(1).stores({
     deleteLog: "++id, type"
 })
 
+db.on("populate", function (transaction) {
+    transaction.symbols.add({ symId: 1000000, title: "Quick Notes", type: 'normal', symbols: [] }).then((id) => {
+        transaction.notes.add({ noteId: 'sample', symId: id, content: 'Ctrl + ⬇ (down arrow-key) to open this chat & dump all your quick note/references!', date: Date.now(), synced: 'true' })
+    });
+});
+
 export const dexieStore = {
     getNotes: async () => {
         return await db.notes.toArray()
