@@ -343,21 +343,21 @@ const Settings = () => {
 
               await loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
-                  setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while backing up -check your coonection!!', duration: 3000 })
+                  setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
                   return
                 }
 
                 deleteUnsynced().then((res2) => {
                   if (!res2 || res2 == 'networkError') {
-                    setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while backing up -check your coonection!!', duration: 3000 })
+                    setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
                     return
                   }
-
                   setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 })
-                  setLoading(false)
                 })
               }).catch(err => console.log(err))
 
+
+              setLoading(false)
             }}>{<RefreshCcwIcon size={18}></RefreshCcwIcon>}</button>
         </div>
 
@@ -370,7 +370,7 @@ const Settings = () => {
             onClick={async () => {
               setLoading(true)
               await dexieStore.populateLocal().then((res) => {
-                res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: 'Something went wrong while loading -check your coonection!!', duration: 3000 })
+                res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
               })
               setLoading(false)
             }}>{<DownloadCloudIcon size={18}></DownloadCloudIcon>}</button>

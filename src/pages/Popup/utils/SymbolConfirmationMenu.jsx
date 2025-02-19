@@ -138,8 +138,9 @@ const SymbolConfirmationMenu = () => {
 
                     <button
                         onClick={() => {
-                            setNewTitle(searchValue)
+                            setNewTitle(clickedSymbolPayload.current.clickedSymbol)
                             document.getElementById("symbolConfimationDialogue").showModal();
+                            document.getElementById("newSymbolTitleInput").focus()
                         }}
                         className={`absolute bottom-24 left-6 w-10 h-10 text-xl pb-1 font-bold rounded-lg shadow-lg ${isDarkMode
                             ? "bg-[#25d366] text-white hover:bg-[#1da759]"
@@ -167,6 +168,7 @@ const SymbolConfirmationMenu = () => {
                         <strong>{clickedSymbolPayload.current.clickedSymbol}</strong>
                     </span>
                     <input
+                        id="newSymbolTitleInput"
                         type="text"
                         placeholder="Enter Title"
                         value={newTitle}
