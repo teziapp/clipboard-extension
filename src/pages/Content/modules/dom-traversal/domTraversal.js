@@ -55,8 +55,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                 chrome.runtime.sendMessage({
                     msg: 'clickedSymbol',
                     payload: {
-                        clickedSymbol: symbol,
-                        url: `${window.location.href}`
+                        clickedSymbol: symbol
                     }
                 });
             };

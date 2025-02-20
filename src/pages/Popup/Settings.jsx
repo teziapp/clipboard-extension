@@ -1,8 +1,8 @@
-import { DotSquareIcon, Download, DownloadCloudIcon, DownloadIcon, Moon, RefreshCcw, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
+import { DotSquareIcon, Download, DownloadCloudIcon, Moon, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
-import { InitialUserSetup } from './utils/auth/InitialUserSetup';
+// import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
 import { dexieStore } from '../../Dexie/DexieStore';
 import { Loading } from './utils/Loading';

@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
+import { print } from '../Background/utils/printer';
 
 const SnippetContext = createContext();
 
 export const useSnippets = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
-
     const navigate = useNavigate()
 
     const clickedSymbolPayload = useRef({

@@ -34,8 +34,7 @@ const onClickHandler = (e) => {
     console.log(clickedSymbol, " has been clicked")
     chrome.runtime.sendMessage({
         msg: 'clickedSymbol', payload: {
-            clickedSymbol,
-            url: `${window.location.href}`
+            clickedSymbol
         }
     })
 }
@@ -105,7 +104,7 @@ const startObserving = () => {
 }
 
 
-chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.href }, (res) => {
+chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
     if (!res?.symbols?.length) {
         console.log("Didn't recieve symbols")
         return;
@@ -128,13 +127,10 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.hr
 })
 
 window.onkeydown = (e) => {
-    console.log('dwn')
     console.log(e.key)
     if (e.ctrlKey && !ctrlKeyPressed) {
-        console.log('ctrl')
         ctrlKeyPressed = true
     } else if (e.key == "ArrowDown") {
-        console.log('sending')
         ctrlKeyPressed ? chrome.runtime.sendMessage({ msg: 'openQuickNotes' }) : null
     }
 }

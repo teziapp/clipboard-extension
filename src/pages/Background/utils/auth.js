@@ -91,7 +91,6 @@ export async function getToken() {
                 const nowPlus60 = nowInSeconds + 60;
 
                 // expired or will expire in the next 60 seconds
-                console.log(nowPlus60, expiresAt)
                 if (expiresAt <= nowPlus60) {
                     const response = await fetch(`https://tezi-extension.hamzaravani4.workers.dev/api/auth/refresh`, {
                         method: "POST",

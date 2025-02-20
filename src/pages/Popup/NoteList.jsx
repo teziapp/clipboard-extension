@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { dexieStore } from '../../Dexie/DexieStore';
 import { formatDate } from './utils/formatDate';
 import { Loading } from './utils/Loading';
-import { InitialUserSetup } from './utils/auth/InitialUserSetup';
+// import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 
 const NoteList = () => {
     const navigate = useNavigate()
