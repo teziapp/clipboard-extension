@@ -1,6 +1,6 @@
-import { DotSquareIcon, Download, DownloadCloudIcon, Moon, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
+import { AlertCircle, DotSquareIcon, Download, DownloadCloudIcon, Moon, RefreshCcwIcon, Sun, Trash2, Trash2Icon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSnippets } from './SnippetContext';
 // import { InitialUserSetup } from './utils/auth/InitialUserSetup';
 import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
@@ -23,17 +23,28 @@ const ImportIcon = () => (
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState } = useSnippets();
+  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState, setSymbolDataSynced } = useSnippets();
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
   const [blockedSitesDisplay, setBlockedSitesDisplay] = useState([])
   const [loading, setLoading] = useState(false)
+
+  const location = useLocation()
 
   useEffect(() => {
     chrome.storage.local.get(["blockedSites"]).then((val) => {
       setBlockedSitesDisplay(val.blockedSites || [])
     })
   }, [])
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [location]);
 
   const handleExport = () => {
 
@@ -104,11 +115,18 @@ const Settings = () => {
   async function generateSheetUrl() {
     setLoading(true)
 
-    const setup = await InitialUserSetup()
+    const setup = await chrome.runtime.sendMessage({ msg: 'initialAuthSetup' })
     if (setup == 'doneSetup') {
       setNotificationState({ show: true, type: 'success', text: 'Registration successful!', duration: 3000 })
       chrome.storage.local.get(["userCreds"]).then((val) => {
         setUserCreds(val.userCreds)
+      })
+
+      //start syncing
+      setSymbolDataSynced('syncing')
+      chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
+        if (!res || res == 'error') return setSymbolDataSynced(false);
+        res == 'success' ? setSymbolDataSynced(true) : null
       })
     } else { setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong! -check your connection!', duration: 3000 }) }
 
@@ -117,14 +135,26 @@ const Settings = () => {
 
   async function registerSheetUrl() {
     if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
-    const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
+    const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/)[1] : null
     if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
 
     setLoading(true)
 
-    chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
-      setUserCreds({ sheetId })
-      setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
+    await chrome.runtime.sendMessage({ msg: 'initialAuthSetup', registerExisting: true, payload: { sheetId } }).then((res) => {
+      if (res == 'doneSetup') {
+        setUserCreds({ sheetId })
+        setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
+
+        // start Syncing..
+        setSymbolDataSynced('syncing')
+        chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
+          if (!res || res == 'error') return setSymbolDataSynced(false);
+          res == 'success' ? setSymbolDataSynced(true) : null
+        })
+      } else {
+        setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! -consider checking your connection!', duration: 3000 })
+      }
+
     })
 
     setLoading(false)
@@ -265,7 +295,7 @@ const Settings = () => {
 
       <div className={`w-full mt-3 ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
 
-        <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-black"}`}>
+        <h3 id='sheetSettings' className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-black"}`}>
           Sheet Settings
         </h3>
 
@@ -301,7 +331,7 @@ const Settings = () => {
               Create New
             </button>
 
-            <span className="my-2 text-sm text-gray-500">or</span>
+            <span title='If you have an existing sheet that was registered earlier, you can continue with it from below' className="my-1 flex flex-row items-center text-sm text-gray-500">or <i><AlertCircle size={11} className='ml-1'></AlertCircle></i></span>
 
             <div className="flex flex-row w-full gap-1">
               <input
@@ -344,25 +374,27 @@ const Settings = () => {
               await loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
                   setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
+                  setLoading(false)
                   return
                 }
 
                 deleteUnsynced().then((res2) => {
                   if (!res2 || res2 == 'networkError') {
                     setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
+                    setLoading(false)
                     return
                   }
+                  setLoading(false)
                   setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 })
                 })
               }).catch(err => console.log(err))
 
 
-              setLoading(false)
             }}>{<RefreshCcwIcon size={18}></RefreshCcwIcon>}</button>
         </div>
 
         <div className='flex flex-row justify-between items-center'>
-          <span className='flex flex-row' title='Loads un-synced data to sheet'>Load data from sheet to local</span>
+          <span className='flex flex-row items-center' title='Loads un-synced data to sheet'>Load data from sheet to local <i title='Over-writes all your local notes data with the data present in sheet'><AlertCircle size={13} className='ml-1'></AlertCircle></i></span>
           <button className={`px-2 py-1 rounded-md font-medium ${isDarkMode
             ? "bg-[#007c65] hover:bg-[#00a884] text-white"
             : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -370,7 +402,7 @@ const Settings = () => {
             onClick={async () => {
               setLoading(true)
               await dexieStore.populateLocal().then((res) => {
-                res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
+                res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: "something went wrong while restoring data, \n- your connection is poor OR your sheet is not registered!" })
               })
               setLoading(false)
             }}>{<DownloadCloudIcon size={18}></DownloadCloudIcon>}</button>

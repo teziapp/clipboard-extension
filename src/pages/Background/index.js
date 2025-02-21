@@ -1,10 +1,12 @@
 import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
+import { InitialUserSetup } from "./utils/InitialUserSetup";
 
 let exactMatches;
 let nearestSymbols;
 let clickedSymbolPayload;
+let authSetupResult;
 
 let openPopupFor = {
     'openSymbolChat': false,
@@ -41,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             })
             return true;
 
-        case 'isOnline':
+        case 'startSyncing':
             loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
                     sendResponse('error')
@@ -61,10 +63,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return true;
 
         case 'popupOpened':
-            console.log('opened')
             switch (true) {
                 case openPopupFor.openSymbolChat:
-                    console.log('happened')
                     exactMatches?.length ? (exactMatches.length == 1 ? sendResponse({ msg: 'exactMatchFound', payload: { exactMatch: exactMatches[0], url: clickedSymbolPayload.url } }) : sendResponse({ msg: 'conflictOccurred', payload: { exactMatches, url: clickedSymbolPayload.url, clickedSymbol: clickedSymbolPayload.clickedSymbol } })) : sendResponse({
                         msg: 'exactMatchNotFound', payload: {
                             nearestSymbols: nearestSymbols || [],
@@ -85,7 +85,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     break;
 
                 case openPopupFor.authSetupCompleted:
-
+                    sendResponse({
+                        msg: 'authSetupCompleted',
+                        payload: authSetupResult
+                    })
                     openPopupFor.authSetupCompleted = false;
                     break;
 
@@ -93,13 +96,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse(null)
             }
 
-            return true
+            return true;
 
         case 'openQuickNotes':
             openPopupFor.openQuickNotes = true;
             chrome.action.openPopup()
             break;
 
+        case 'initialAuthSetup':
+            InitialUserSetup(message.registerExisting, message.payload).then((res) => {
+
+                sendResponse(res)
+                authSetupResult = res;
+                openPopupFor.authSetupCompleted = true;
+
+            })
+
+            return true;
     }
 })
 

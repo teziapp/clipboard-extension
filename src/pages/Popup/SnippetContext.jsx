@@ -40,15 +40,14 @@ export const SnippetProvider = ({ children }) => {
 
         if (navigator.onLine) {
             setSymbolDataSynced('syncing')
-            chrome.runtime.sendMessage({ msg: 'isOnline' }, (res) => {
-                if (!res) return;
+            chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
+                if (!res || res == 'error') return setSymbolDataSynced(false);
                 res == 'success' ? setSymbolDataSynced(true) : null
             })
         }
 
         chrome.runtime.sendMessage({ msg: 'popupOpened' }, (res) => {
             if (!res) return;
-            console.log(res)
             switch (res.msg) {
                 case 'exactMatchFound':
                     clickedSymbolPayload.current = res.payload
@@ -66,6 +65,15 @@ export const SnippetProvider = ({ children }) => {
                     break;
                 case 'openQuickNotes':
                     navigate(`/activeNotes/${1000000}`)
+                    break;
+                case 'authSetupCompleted':
+                    if (res.payload == 'doneSetup') {
+                        setNotificationState({ show: true, type: 'success', text: 'Sheet registration successful!', duration: 3000 })
+                        navigate('/settings/#sheetSettings')
+                    } else {
+                        setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! -consider checking your connection!', duration: 3000 })
+                    }
+                    break;
             }
 
         })

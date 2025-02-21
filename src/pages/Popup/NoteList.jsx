@@ -48,28 +48,48 @@ const NoteList = () => {
 
     async function registerSheetUrl() {
         if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
-        const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)\//)[1] : null
+        const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/)[1] : null
         if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
 
         setLoading(true)
 
-        chrome.storage.local.set({ userCreds: { sheetId: sheetId } }).then(() => {
-            setUserCreds({ sheetId })
+        await chrome.runtime.sendMessage({ msg: 'initialAuthSetup', registerExisting: true, payload: { sheetId } }).then((res) => {
+            if (res == 'doneSetup') {
+                setUserCreds({ sheetId })
+                setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
+
+                // start Syncing..
+                setSymbolDataSynced('syncing')
+                chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
+                    if (!res || res == 'error') return setSymbolDataSynced(false);
+                    res == 'success' ? setSymbolDataSynced(true) : null
+                })
+            } else {
+                setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! -consider checking your connection!', duration: 3000 })
+            }
+
         })
-        setNotificationState({ show: true, type: 'success', text: 'Registration Successful!', duration: 3000 })
+
         setLoading(false)
     }
 
     async function generateSheetUrl() {
         setLoading(true)
 
-        const setup = await InitialUserSetup()
+        const setup = await chrome.runtime.sendMessage({ msg: 'initialAuthSetup' })
         if (setup == 'doneSetup') {
-            setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
+            setNotificationState({ show: true, type: 'success', text: 'Registration successful!', duration: 3000 })
             chrome.storage.local.get(["userCreds"]).then((val) => {
                 setUserCreds(val.userCreds)
             })
-        } else { setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 }) }
+
+            //start syncing
+            setSymbolDataSynced('syncing')
+            chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
+                if (!res || res == 'error') return setSymbolDataSynced(false);
+                res == 'success' ? setSymbolDataSynced(true) : null
+            })
+        } else { setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong! -check your connection!', duration: 3000 }) }
 
         setLoading(false)
     }
@@ -101,7 +121,7 @@ const NoteList = () => {
             </div>
 
             {/* Notes List */}
-            <div id="allNotes-container" className="overflow-y-auto px-3">
+            <div id="allNotes-container" className="overflow-y-auto px-3 flex flex-col items-center">
                 {recentNotes.length > 0 ? (
                     recentNotes.map(({ symId, note }) => {
                         const currentSymbol = SymbolsDisplay.find((ele) => ele.symId == symId)
@@ -113,7 +133,7 @@ const NoteList = () => {
                                     navigate(`/activeNotes/${symId}`);
                                 }}
                                 key={symId}
-                                className={`flex items-center cursor-pointer hover:${isDarkMode ? 'bg-[#394e58]' : 'bg-[#e1e8eb]'
+                                className={`w-full flex items-center cursor-pointer hover:${isDarkMode ? 'bg-[#394e58]' : 'bg-[#e1e8eb]'
                                     } py-2 px-3 mb-2 rounded-lg shadow ${isDarkMode ? 'bg-[#2a3942]' : 'bg-[#ffffff]'}`}
                             >
                                 {/* Profile Picture */}
@@ -154,9 +174,17 @@ const NoteList = () => {
                             No notes available.
                         </p>
 
-                        {userCreds.sheetId ? null : (<div className={`flex flex-col items-center p-3 mb-3 rounded-md ${isDarkMode ? "bg-[#2a3942]" : "bg-gray-100"}`}>
+                    </div>
+                )}
 
-                            <button
+                {userCreds.sheetId ? null : (
+                    <div className={`flex flex-col items-center w-60 p-2 mt-3 mb-3 cursor-pointer rounded-md ${isDarkMode ? "bg-[#2a3942]" : "bg-gray-100"}`}
+                        onClick={() => {
+                            navigate('/settings/#sheetSettings')
+                        }}>
+                        <h3 className='font-bold text-blue-500'>You haven't backed-up your data!</h3>
+                        <span className='text-center'>Register a spreadsheet and have all your data backedup in real-time</span>
+                        {/* <button
                                 className={`w-full py-2 rounded-md font-medium transition duration-200 ${isDarkMode
                                     ? "bg-[#007c65] hover:bg-[#00a884] text-white"
                                     : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -188,14 +216,10 @@ const NoteList = () => {
                                     onClick={() => registerSheetUrl()}
                                 >
                                     Register
-                                </button>
-                            </div>
+                                </button> 
+                            </div>*/}
 
-                        </div>)}
-
-
-                    </div>
-                )}
+                    </div>)}
             </div>
             <Loading text={"Sheet is getting registered..."} show={loading}></Loading>
         </div>

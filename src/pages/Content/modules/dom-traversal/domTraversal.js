@@ -74,6 +74,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
             let text = node.nodeValue;
             let matches = [];
 
+
             // Find all matches for all symbols in this text node
             for (const { symbol, symbolObj } of tokensArray) {
                 const isNegative = negSet.has(`${symbolObj.symId}:${symbol.toLocaleLowerCase().replace(/[ .]/g, "")}`);

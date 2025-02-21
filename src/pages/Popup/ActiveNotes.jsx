@@ -108,7 +108,7 @@ const ActiveNotes = () => {
         });
 
         //to sync the default NSE symbol only if user take note on One 
-        if (!activeNotes.length && !activeSymbol.synced) {
+        if (!activeSymbol.synced) {
             addOrUpdateSymbolToSheet(activeSymbol).then((res) => {
                 if (res != 'networkError' && res?.response?.result.status) {
                     dexieStore.updateSymbol({ ...activeSymbol, synced: 'true' })
@@ -161,13 +161,13 @@ const ActiveNotes = () => {
                                 setLoading(true)
                                 await loadUnsynced().then((res1) => {
                                     if (!res1 || res1 == 'networkError') {
-                                        setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings') } })
+                                        setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings/#sheetSettings') } })
                                         return
                                     }
 
                                     return deleteUnsynced().then((res2) => {
                                         if (!res2 || res2 == 'networkError') {
-                                            setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings') } })
+                                            setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings/#sheetSettings') } })
                                             return
                                         }
                                         setNotificationState({ show: true, text: 'Synced data successfully', type: 'success', duration: 3000 })
