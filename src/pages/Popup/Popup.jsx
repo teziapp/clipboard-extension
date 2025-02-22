@@ -12,6 +12,7 @@ import SymbolConfirmationMenu from './utils/SymbolConfirmationMenu';
 import { NoteSettings } from './NoteSettings';
 import { SymbolConflictMenu } from './utils/SymbolConflictMenu';
 import { Notification } from './utils/Notification';
+import { Loading } from './utils/Loading';
 
 const Popup = () => {
 
@@ -52,6 +53,7 @@ const PopupContent = () => {
             </Routes>
           </div>
           <Notification></Notification>
+          <Loading></Loading>
           <Navbar />
         </div>
       </SnippetProvider>

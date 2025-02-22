@@ -11,7 +11,7 @@ import { Loading } from './utils/Loading';
 
 const ActiveNotes = () => {
 
-    const { isDarkMode, clickedSymbolPayload, symbolDataSynced, setSymbolDataSynced, setNotificationState } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, symbolDataSynced, setSymbolDataSynced, setNotificationState, setLoadingScreenState } = useSnippets();
     const [noteContent, setNoteContent] = useState('');
     const [activeNotes, setActiveNotes] = useState([])
     const [activeSymbol, setActiveSymbol] = useState({})
@@ -158,7 +158,7 @@ const ActiveNotes = () => {
                         <span className={`text-xs ${isDarkMode ? (symbolDataSynced ? "text-green-600" : "text-red-500") : (symbolDataSynced ? "text-green-600" : "text-red-500")}`}>{symbolDataSynced === 'syncing' ? "(Syncing..)" : (symbolDataSynced ? "(Synced)" : <text title='Some Data migh not have loaded in sheet'>{"(Un-synced)"}</text>)}</span>
                         {!symbolDataSynced && <button className='ml-1 mt-0.5 text-gray-500 hover:text-sky-800'
                             onClick={async () => {
-                                setLoading(true)
+                                setLoadingScreenState({ show: true })
                                 await loadUnsynced().then((res1) => {
                                     if (!res1 || res1 == 'networkError') {
                                         setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!", action: "Register", doAction: () => { navigate('/settings/#sheetSettings') } })
@@ -176,7 +176,7 @@ const ActiveNotes = () => {
                                 }).catch(err => console.log(err))
 
                                 setSymbolDataSynced(true)
-                                setLoading(false)
+                                setLoadingScreenState({ show: false })
                                 navigate('/noteList')
                             }} >
                             <RefreshCcw size={13} ></RefreshCcw>
@@ -278,8 +278,6 @@ const ActiveNotes = () => {
                     <Plus size={24} />
                 </button>
             </div>
-
-            <Loading show={loading}></Loading>
 
         </div >
 

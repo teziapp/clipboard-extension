@@ -15,49 +15,39 @@ export const onLaunchWebAuthFlow = async () => {
         authUrl.searchParams.set("include_granted_scopes", "true");
         authUrl.searchParams.set("prompt", "consent");
 
-        // Open the auth URL in a new tab
-        chrome.tabs.create({ url: authUrl.href }, (tab) => {
-            const tabId = tab.id;
+        chrome.tabs.query({ active: true, currentWindow: true }, ([initTab]) => {
 
-            // Listen for tab updates to detect redirection
-            chrome.tabs.onUpdated.addListener(function listener(updatedTabId, changeInfo) {
-                if (updatedTabId === tabId && changeInfo.url && changeInfo.url.startsWith(redirectUri)) {
-                    console.log("Redirect URL Captured:", changeInfo.url);
 
-                    const params = new URLSearchParams(new URL(changeInfo.url).search);
-                    const code = params.get("code");
 
-                    if (!code) {
-                        reject(new Error("No auth code found in the redirect URL"));
-                        return;
-                    }
+            // Open the auth URL in a new tab
+            chrome.tabs.create({ url: authUrl.href }, (tab) => {
+                const tabId = tab.id;
 
-                    // Remove the listener and close the tab
-                    chrome.tabs.onUpdated.removeListener(listener);
-                    chrome.tabs.remove(tabId);
+                // Listen for tab updates to detect redirection
+                chrome.tabs.onUpdated.addListener(function listener(updatedTabId, changeInfo) {
+                    if (updatedTabId === tabId && changeInfo.url && changeInfo.url.startsWith(redirectUri)) {
+                        console.log("Redirect URL Captured:", changeInfo.url);
 
-                    // Exchange auth code for an access token
-                    fetch(`https://tezi-extension.hamzaravani4.workers.dev/api/auth/token`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ code }),
-                    })
-                        .then(response => response.json())
-                        .then(({ accessToken, expiresAt, refreshToken }) => {
-                            if (accessToken) {
-                                chrome.storage.local.set({ accessToken, refreshToken, expiresAt }, () => {
-                                    resolve(accessToken);
-                                });
-                            } else {
-                                reject(new Error("No access token received"));
-                            }
+                        const params = new URLSearchParams(new URL(changeInfo.url).search);
+                        const code = params.get("code");
+
+                        if (!code) {
+                            reject(new Error("No auth code found in the redirect URL"));
+                            return;
+                        }
+
+                        // Remove the listener and close the tab
+
+                        chrome.tabs.highlight({ tabs: [initTab.index] }, () => {
+                            chrome.tabs.onUpdated.removeListener(listener);
+                            chrome.tabs.remove(tabId);
                         })
-                        .catch(error => {
-                            reject(new Error(`Token exchange failed: ${error.message}`));
-                        });
-                }
+                        chrome.action.openPopup()
+                        resolve(code)
+                    }
+                });
             });
-        });
+        })
     });
 };
 

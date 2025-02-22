@@ -127,8 +127,9 @@ const SymbolConfirmationMenu = () => {
                         <span
                             className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
                             onClick={() => {
-                                setNewTitle(searchValue)
+                                setNewTitle(clickedSymbolPayload.current.clickedSymbol)
                                 document.getElementById("symbolConfimationDialogue").showModal();
+                                document.getElementById("newSymbolTitleInput").focus()
                             }}>
                             create new from here
                         </span>
@@ -184,7 +185,7 @@ const SymbolConfirmationMenu = () => {
 
                             document.getElementById("symbolConfimationDialogue").close();
 
-                            setSymbolDataSynced(false) //initially set tit to true and then chnage if all goes fine
+                            setSymbolDataSynced(false) //initially set title to true and then chnage if all goes fine
 
                             const symbolToBeAdded = {
                                 title: newTitle,

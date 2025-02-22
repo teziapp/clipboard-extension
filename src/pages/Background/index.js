@@ -1,6 +1,7 @@
 import { db } from "../../Dexie/DexieStore";
 import { deleteUnsynced, loadUnsynced } from "../../Dexie/utils/sheetSyncHandlers";
 import nearestSymbolFinder from "./nearestSymbolFinder";
+import { getToken, onLaunchWebAuthFlow } from "./utils/auth";
 import { InitialUserSetup } from "./utils/InitialUserSetup";
 
 let exactMatches;
@@ -11,7 +12,7 @@ let authSetupResult;
 let openPopupFor = {
     'openSymbolChat': false,
     'openQuickNotes': false,
-    'authSetupCompleted': false
+    'authSetupStarted': false
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -84,12 +85,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     openPopupFor.openQuickNotes = false;
                     break;
 
-                case openPopupFor.authSetupCompleted:
+                case openPopupFor.authSetupStarted:
                     sendResponse({
-                        msg: 'authSetupCompleted',
-                        payload: authSetupResult
+                        msg: 'authSetupStarted'
                     })
-                    openPopupFor.authSetupCompleted = false;
+                    openPopupFor.authSetupStarted = false;
                     break;
 
                 default:
@@ -104,15 +104,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case 'initialAuthSetup':
-            InitialUserSetup(message.registerExisting, message.payload).then((res) => {
+            onLaunchWebAuthFlow().then((authCode) => {
+                openPopupFor.authSetupStarted = true;
+                chrome.action.openPopup()
 
-                sendResponse(res)
-                authSetupResult = res;
-                openPopupFor.authSetupCompleted = true;
+                InitialUserSetup(message.registerExisting, {
+                    sheetId: message.payload?.sheetId,
+                    authCode
+                }).then((res) => {
 
+                    chrome.runtime.sendMessage({ msg: 'authSetupCompleted', payload: { result: res } })
+
+                })
             })
-
-            return true;
     }
 })
 

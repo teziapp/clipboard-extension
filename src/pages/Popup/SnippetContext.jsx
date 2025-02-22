@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteUnsynced, loadUnsynced } from '../../Dexie/utils/sheetSyncHandlers';
-import { print } from '../Background/utils/printer';
 
 const SnippetContext = createContext();
 
@@ -20,6 +18,7 @@ export const SnippetProvider = ({ children }) => {
     const [userCreds, setUserCreds] = useState({})
     const [symbolDataSynced, setSymbolDataSynced] = useState(true)
     const [notificationState, setNotificationState] = useState({})
+    const [loadingScreenState, setLoadingScreenState] = useState({})
 
     const [snippets, setSnippets] = useState([]);
     const [tags, setTags] = useState([]);
@@ -66,13 +65,37 @@ export const SnippetProvider = ({ children }) => {
                 case 'openQuickNotes':
                     navigate(`/activeNotes/${1000000}`)
                     break;
-                case 'authSetupCompleted':
-                    if (res.payload == 'doneSetup') {
-                        setNotificationState({ show: true, type: 'success', text: 'Sheet registration successful!', duration: 3000 })
-                        navigate('/settings/#sheetSettings')
-                    } else {
-                        setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! -consider checking your connection!', duration: 3000 })
+                case 'authSetupStarted':
+                    setLoadingScreenState({ show: true })
+                    const authSetupCompletedListner = (message) => {
+                        console.log('msg', message)
+                        if (message.msg != 'authSetupCompleted') return;
+                        if (message.payload.result == 'doneSetup') {
+                            chrome.storage.local.get("userCreds").then(((val) => {
+                                setUserCreds(val.userCreds)
+                                setLoadingScreenState({ show: false })
+                                setNotificationState({ show: true, type: 'success', text: 'Sheet registered successfully' })
+                            }))
+                        } else {
+                            setLoadingScreenState({ show: false })
+                            setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! Please try again' })
+                        }
+                        chrome.runtime.onMessage.removeListener(authSetupCompletedListner)
                     }
+                    chrome.runtime.onMessage.addListener(authSetupCompletedListner)
+                    // const onStorageChangeListner = (changes) => {
+                    //     console.log(changes)
+                    //     if (changes.userCreds?.newValue?.sheetId) {
+                    //         setUserCreds({ sheetId: changes.userCreds?.newValue?.sheetId })
+                    //         setLoadingScreenState({ show: false })
+                    //         setNotificationState({ show: true, type: 'success', text: 'Sheet registered successfully' })
+                    //     } else {
+                    //         setLoadingScreenState({ show: false })
+                    //         setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! Please try again' })
+                    //     }
+                    //     chrome.storage.local.onChanged.removeListener(onStorageChangeListner)
+                    // }
+                    // chrome.storage.local.onChanged.addListener(onStorageChangeListner)
                     break;
             }
 
@@ -173,7 +196,7 @@ export const SnippetProvider = ({ children }) => {
     }, [isDarkMode]);
 
     return (
-        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced, notificationState, setNotificationState }}>
+        <SnippetContext.Provider value={{ snippets, addSnippet, updateSnippet, deleteSnippet, tags, addTag, updateTag, deleteTag, loadTags, exportData, importData, isDarkMode, toggleDarkMode, clickedSymbolPayload, userCreds, setUserCreds, symbolDataSynced, setSymbolDataSynced, notificationState, setNotificationState, setLoadingScreenState, loadingScreenState }}>
             {children}
         </SnippetContext.Provider>
     );

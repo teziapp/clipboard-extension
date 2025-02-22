@@ -17,7 +17,7 @@ export const NoteSettings = () => {
     const [loading, setLoading] = useState(false)
     const [highlightColor, setHighlightColor] = useState("#FFD0A3")
 
-    const { isDarkMode, setSymbolDataSynced, setNotificationState } = useSnippets()
+    const { isDarkMode, setSymbolDataSynced, setNotificationState, setLoadingScreenState } = useSnippets()
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -386,12 +386,12 @@ export const NoteSettings = () => {
                     </button>
                     <button onClick={async () => {
                         document.getElementById("deleteConfirmationDialogue").close()
-                        setLoading(true)
+                        setLoadingScreenState({ show: true })
                         await dexieStore.deleteSymbol(activeSymbol).then((res) => {
                             res.remoteDelete?.response?.result.status ? null : setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete chat from sheet -check your connection!' })
                         })
                         chrome.tabs.reload()
-                        setLoading(false)
+                        setLoadingScreenState({ show: false })
                         navigate('/noteList/')
                     }}
                         className="bg-red-500 hover:bg-red-400 mt-3 px-3 py-2 text-white rounded-md font-semibold">
@@ -400,7 +400,6 @@ export const NoteSettings = () => {
                 </div>
             </dialog>
 
-            <Loading show={loading}></Loading>
         </div>
     );
 

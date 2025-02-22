@@ -140,7 +140,9 @@ export const SymbolConflictMenu = () => {
                         <span
                             className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
                             onClick={() => {
+                                setNewTitle(clickedSymbolPayload.current.clickedSymbol)
                                 document.getElementById("symbolConfimationDialogue").showModal();
+                                document.getElementById("newSymbolTitleInput").focus()
                             }}>
                             create new from here
                         </span>

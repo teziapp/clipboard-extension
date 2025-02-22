@@ -23,7 +23,7 @@ const ImportIcon = () => (
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState, setSymbolDataSynced } = useSnippets();
+  const { snippets, tags, setSnippets, setTags, toggleDarkMode, isDarkMode, userCreds, setUserCreds, setNotificationState, setSymbolDataSynced, setLoadingScreenState } = useSnippets();
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
   const [blockedSitesDisplay, setBlockedSitesDisplay] = useState([])
@@ -113,7 +113,6 @@ const Settings = () => {
 
 
   async function generateSheetUrl() {
-    setLoading(true)
 
     const setup = await chrome.runtime.sendMessage({ msg: 'initialAuthSetup' })
     if (setup == 'doneSetup') {
@@ -130,15 +129,12 @@ const Settings = () => {
       })
     } else { setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong! -check your connection!', duration: 3000 }) }
 
-    setLoading(false)
   }
 
   async function registerSheetUrl() {
     if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
     const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/)[1] : null
     if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
-
-    setLoading(true)
 
     await chrome.runtime.sendMessage({ msg: 'initialAuthSetup', registerExisting: true, payload: { sheetId } }).then((res) => {
       if (res == 'doneSetup') {
@@ -157,7 +153,6 @@ const Settings = () => {
 
     })
 
-    setLoading(false)
   }
 
   return (
@@ -369,7 +364,7 @@ const Settings = () => {
             : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
             onClick={async () => {
-              setLoading(true)
+              setLoadingScreenState({ show: true })
 
               await loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
@@ -384,7 +379,7 @@ const Settings = () => {
                     setLoading(false)
                     return
                   }
-                  setLoading(false)
+                  setLoadingScreenState({ show: false })
                   setNotificationState({ show: true, type: 'success', text: 'Synced data successfully!', duration: 3000 })
                 })
               }).catch(err => console.log(err))
@@ -400,16 +395,15 @@ const Settings = () => {
             : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
             onClick={async () => {
-              setLoading(true)
+              setLoadingScreenState({ show: true })
               await dexieStore.populateLocal().then((res) => {
                 res ? setNotificationState({ show: true, type: 'success', text: 'Loaded data successfully!', duration: 3000 }) : setNotificationState({ show: true, type: 'failure', text: "something went wrong while restoring data, \n- your connection is poor OR your sheet is not registered!" })
               })
-              setLoading(false)
+              setLoadingScreenState({ show: false })
             }}>{<DownloadCloudIcon size={18}></DownloadCloudIcon>}</button>
         </div>
       </div>
 
-      <Loading show={loading}></Loading>
     </div>
   );
 };
