@@ -1,58 +1,3 @@
-function adjustHighlighter(bgRGBA, highlightHash) {
-    function rgbaToRGB(rgba) {
-        const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-        if (!match) return null;
-        return {
-            r: parseInt(match[1]),
-            g: parseInt(match[2]),
-            b: parseInt(match[3])
-        };
-    }
-
-    function hashToRGB(hash) {
-        hash = hash.replace(/^#/, "");
-        if (hash.length === 3) {
-            hash = hash.split("").map(char => char + char).join("");
-        }
-        const bigint = parseInt(hash, 16);
-        return {
-            r: (bigint >> 16) & 255,
-            g: (bigint >> 8) & 255,
-            b: bigint & 255
-        };
-    }
-
-    function rgbToHash({ r, g, b }) {
-        return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).padStart(6, "0")}`;
-    }
-
-    const bgRGB = rgbaToRGB(bgRGBA);
-    const highlightRGB = hashToRGB(highlightHash);
-
-    if (!bgRGB || !highlightRGB) return highlightHash; // Return original if parsing fails
-
-    // Find the max brightness in the background RGB
-    const maxBG = Math.max(bgRGB.r, bgRGB.g, bgRGB.b);
-
-    // Improved ratio formula: Handles dark mode better while keeping light mode mostly unchanged
-    const ratio = 1 - Math.pow((maxBG / 255) * 0.8, 0.8);
-
-    // Apply the ratio to highlighter color
-    const adjustedHighlight = {
-        r: Math.round(highlightRGB.r * ratio),
-        g: Math.round(highlightRGB.g * ratio),
-        b: Math.round(highlightRGB.b * ratio)
-    };
-
-    return rgbToHash(adjustedHighlight);
-}
-
-// Example Usage
-console.log(adjustHighlighter("rgba(240, 240, 240, 1)", "#ffc800")); // Should stay bright
-console.log(adjustHighlighter("rgba(30, 30, 30, 1)", "#00ff00")); // Should dim just right
-console.log(adjustHighlighter("rgba(100, 50, 200, 1)", "#ff3232")); // Should balance well
-
-
 function getActualBackgroundColor(element) {
     while (element) {
         const bgColor = window.getComputedStyle(element).backgroundColor;
@@ -67,7 +12,35 @@ function getActualBackgroundColor(element) {
     return "white"; // Default background
 }
 
-// Usage Example: Get the actual background of any element
+function getBrightness(hex) {
+    let { r, g, b } = hexToRGB(hex);
+    let brightness = Math.sqrt(
+        r * r * 0.241 +
+        g * g * 0.691 +
+        b * b * 0.068
+    );
+    return { brightness, hex: rgbToHex(r, g, b) };
+}
+
+// Helper function to convert HEX to RGB
+function hexToRGB(hex) {
+    hex = hex.replace(/^#/, "");
+    let bigint = parseInt(hex, 16);
+    return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+    };
+}
+
+// Helper function to convert RGB back to HEX
+function rgbToHex(r, g, b) {
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+// Example usage:
+console.log(getBrightness("#ff5733")); // { brightness: 139.7, hex: "#ff5733" }
+
 
 
 export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = document.body) {
@@ -109,7 +82,8 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
         const frag = document.createDocumentFragment();
         const span = document.createElement('span');
 
-        span.style.background = adjustHighlighter(nodeBgColor, symbolObj.color || '#FFD0A3');
+        span.style.background = symbolObj.color || '#FFD0A3'
+        span.style.color = getBrightness(symbolObj.color || '#FFD0A3') < 130 ? 'white' : 'black';
         span.className = 'levenshtineMatches';
         span.innerHTML = match;
 
@@ -146,7 +120,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
             let text = node.nodeValue;
             let matches = [];
 
-            let nodeBgColor = getActualBackgroundColor(node.parentElement);
+            //let nodeBgColor = getActualBackgroundColor(node.parentElement);
 
             // Find all matches for all symbols in this text node
             for (const { symbol, symbolObj } of tokensArray) {
@@ -166,8 +140,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                         length: match[0].length,
                         text: match[0],
                         symbol,
-                        symbolObj,
-                        nodeBgColor
+                        symbolObj
                     });
                 }
             }
