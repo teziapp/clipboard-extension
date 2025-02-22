@@ -5,7 +5,7 @@ export const onLaunchWebAuthFlow = async () => {
 
         // Note: this needs to match the one used on the server (below)
         // note the lack of a trailing slash
-        const redirectUri = `https://gljlocpedgbjadcefehhcpflemmlcmpb.chromiumapp.org`
+        const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org`
 
         const state = Math.random().toString(36).substring(7)
 
