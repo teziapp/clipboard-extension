@@ -80,7 +80,7 @@ async function getTextNodes(root, currentUpdatedSymbol) {
                 const regex = new RegExp(`\\b${symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*")}\\b`, "gi");
 
                 if (!node.textContent.match(regex)) return;
-                node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
+                node.parentNode?.replaceChild(document.createTextNode(node.textContent), node);
             })
         });
     }

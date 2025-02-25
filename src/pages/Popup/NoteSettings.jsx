@@ -127,7 +127,7 @@ export const NoteSettings = () => {
                             {/* Add New Color Button */}
                             <span className="w-6 h-6 rounded-full">
                                 <button
-                                    className="text-center pb-1 w-full h-full font-bold text-sm bg-gray-200 rounded-md hover:bg-gray-300 transition"
+                                    className={`text-center pb-1 w-full h-full font-bold text-sm ${isDarkMode ? 'bg-gray-500' : 'bg-gray-200'}  rounded-md hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} transition`}
                                     onClick={
                                         () => {
                                             document.getElementById("highlight-color-selector").click();
@@ -467,9 +467,11 @@ export const NoteSettings = () => {
                         document.getElementById("deleteConfirmationDialogue").close()
                         setLoadingScreenState({ show: true })
                         await dexieStore.deleteSymbol(activeSymbol).then((res) => {
+                            if (!res.remoteDelete) return
                             res.remoteDelete?.response?.result.status ? null : setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete chat from sheet -check your connection!' })
                         })
                         //chrome.tabs.reload()
+
                         setLoadingScreenState({ show: false })
                         navigate('/noteList/')
                     }}
