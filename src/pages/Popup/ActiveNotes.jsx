@@ -147,7 +147,7 @@ const ActiveNotes = () => {
                 <ArrowLeft
                     className={`cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-[#008069] hover:text-[#006d57]'}`}
                     size={24}
-                    onClick={() => navigate('/noteList')}
+                    onClick={() => navigate('/')}
                 />
                 <div className='leading-0'>
                     <h1 className={`leading-none inline-block text-lg font-medium w-52 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
@@ -177,7 +177,7 @@ const ActiveNotes = () => {
 
                                 setSymbolDataSynced(true)
                                 setLoadingScreenState({ show: false })
-                                navigate('/noteList')
+                                navigate('/')
                             }} >
                             <RefreshCcw size={13} ></RefreshCcw>
                         </button>}

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { db, dexieStore } from "../../Dexie/DexieStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useSnippets } from "./SnippetContext";
-import { Loading } from "./utils/Loading";
 import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../Dexie/utils/sheetSyncHandlers";
 
 export const NoteSettings = () => {
@@ -47,7 +46,7 @@ export const NoteSettings = () => {
 
     return (
         <div
-            className={` w-full h-full flex flex-col py-2 ${isDarkMode ? "bg-gray-900 text-gray-300" : "bg-white text-gray-800"
+            className={` w-full h-full flex flex-col ${isDarkMode ? "bg-gray-900 text-gray-300" : "bg-white text-gray-800"
                 }`}
         >
             {/* Header */}
@@ -60,7 +59,7 @@ export const NoteSettings = () => {
                 />
                 <span className="px-4 font-semibold text-2xl">Settings</span>
             </div>
-            <div className="p-3 pb-2 w-full h-full overflow-y-scroll">
+            <div className="p-3 pb-0 w-full h-full overflow-y-scroll">
                 {/* Title Section */}
                 <div
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"
@@ -101,7 +100,7 @@ export const NoteSettings = () => {
 
                         <div
                             id="highlight-color-container"
-                            className="flex flex-wrap gap-3 p-2 pl-4 border rounded-lg w-full h-fit overflow-y-auto"
+                            className="flex flex-wrap gap-3 p-2 pl-6 border rounded-lg w-full h-fit overflow-y-auto"
                         >
 
                             {/* Render Favorite Colors */}
@@ -215,7 +214,7 @@ export const NoteSettings = () => {
                     </div>
                 </div>
 
-                {/* negative URLs Section */}
+
                 {/* Negative URLs Section */}
                 <div
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}
@@ -357,7 +356,7 @@ export const NoteSettings = () => {
                 </div>
 
 
-                <div className="flex flex-row justify-around mt-4">
+                <div className="sticky bottom-0 w-full backdrop-blur-lg shadow-lg flex justify-around items-center py-4">
                     <button
                         className={`mt-3 px-3 py-2 text-white rounded-md font-semibold ${isDarkMode
                             ? "bg-green-500 hover:bg-green-400"

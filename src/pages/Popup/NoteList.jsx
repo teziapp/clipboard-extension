@@ -15,18 +15,16 @@ const NoteList = () => {
     const storedSymbols = useRef([])
     const [SymbolsDisplay, setSymbolsDisplay] = useState([])
     const [recentNotes, setRecentNotes] = useState([])
-    const [sheetUrlInput, setSheetUrlInput] = useState("")
     const [searchChatsInput, setSearchChatsInput] = useState("")
-    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
 
         (async () => {
-            const symbols = await dexieStore.getSymbols()
+            const symbols = await dexieStore.getSymbols() || []
             storedSymbols.current = symbols
             setSymbolsDisplay(symbols)
 
-            const storedRecentNotes = await dexieStore.getRecentNotes()
+            const storedRecentNotes = await dexieStore.getRecentNotes() || []
             setRecentNotes(storedRecentNotes);
         })()
 
@@ -43,56 +41,7 @@ const NoteList = () => {
         }
         setSymbolsDisplay(storedSymbols.current)
 
-        console.log(SymbolsDisplay)
     }, [searchChatsInput])
-
-    async function registerSheetUrl() {
-        if (!sheetUrlInput) return setNotificationState({ show: true, type: 'warning', text: 'Enter a valid URL!', duration: 3000 });
-        const sheetId = sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/) ? sheetUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)(?:\/|$)/)[1] : null
-        if (!sheetId) return setNotificationState({ show: true, type: 'warning', text: 'Oops.. something went wrong!', duration: 3000 });
-
-        setLoading(true)
-
-        await chrome.runtime.sendMessage({ msg: 'initialAuthSetup', registerExisting: true, payload: { sheetId } }).then((res) => {
-            if (res == 'doneSetup') {
-                setUserCreds({ sheetId })
-                setNotificationState({ show: true, type: 'success', text: 'Sheet registered!', duration: 3000 })
-
-                // start Syncing..
-                setSymbolDataSynced('syncing')
-                chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
-                    if (!res || res == 'error') return setSymbolDataSynced(false);
-                    res == 'success' ? setSymbolDataSynced(true) : null
-                })
-            } else {
-                setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong while registering sheet! -consider checking your connection!', duration: 3000 })
-            }
-
-        })
-
-        setLoading(false)
-    }
-
-    async function generateSheetUrl() {
-        setLoading(true)
-
-        const setup = await chrome.runtime.sendMessage({ msg: 'initialAuthSetup' })
-        if (setup == 'doneSetup') {
-            setNotificationState({ show: true, type: 'success', text: 'Registration successful!', duration: 3000 })
-            chrome.storage.local.get(["userCreds"]).then((val) => {
-                setUserCreds(val.userCreds)
-            })
-
-            //start syncing
-            setSymbolDataSynced('syncing')
-            chrome.runtime.sendMessage({ msg: 'startSyncing' }, (res) => {
-                if (!res || res == 'error') return setSymbolDataSynced(false);
-                res == 'success' ? setSymbolDataSynced(true) : null
-            })
-        } else { setNotificationState({ show: true, type: 'failure', text: 'Oops.. something went wrong! -check your connection!', duration: 3000 }) }
-
-        setLoading(false)
-    }
 
     return (
         <div
@@ -177,51 +126,63 @@ const NoteList = () => {
                     </div>
                 )}
 
-                {userCreds.sheetId ? null : (
+                {userCreds.sheetId || searchChatsInput ? null : (
                     <div className={`flex flex-col items-center w-60 p-2 mt-3 mb-3 cursor-pointer rounded-md ${isDarkMode ? "bg-[#2a3942]" : "bg-gray-100"}`}
                         onClick={() => {
                             navigate('/settings/#sheetSettings')
                         }}>
                         <h3 className='font-bold text-blue-500'>You haven't backed-up your data!</h3>
                         <span className='text-center'>Register a spreadsheet and have all your data backedup in real-time</span>
-                        {/* <button
-                                className={`w-full py-2 rounded-md font-medium transition duration-200 ${isDarkMode
-                                    ? "bg-[#007c65] hover:bg-[#00a884] text-white"
-                                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                                    }`}
-                                onClick={() => generateSheetUrl()}
-                            >
-                                Create New
-                            </button>
-
-                            <span className="my-2 text-sm text-gray-500">or</span>
-
-                            <div className="flex flex-row w-full gap-1">
-                                <input
-                                    type="text"
-                                    value={sheetUrlInput}
-                                    onChange={(e) => setSheetUrlInput(e.target.value)}
-                                    placeholder="Enter existing sheet URL"
-                                    className={`flex-1 px-3 py-2 rounded-md focus:outline-none focus:ring-2 transition duration-200 ${isDarkMode
-                                        ? "bg-gray-600 text-white border-none focus:ring-[#00a884] placeholder-gray-300"
-                                        : "bg-white text-black border border-gray-300 focus:ring-blue-500 placeholder-gray-500"
-                                        }`}
-                                />
-
-                                <button
-                                    className={`px-2 py-2 rounded-md font-medium transition duration-200 ${isDarkMode
-                                        ? "bg-[#007c65] hover:bg-[#00a884] text-white"
-                                        : "bg-blue-600 hover:bg-blue-700 text-white"
-                                        }`}
-                                    onClick={() => registerSheetUrl()}
-                                >
-                                    Register
-                                </button> 
-                            </div>*/}
-
                     </div>)}
+
+                <hr className={`w-36 border-1 mb-4 ${isDarkMode ? "border-gray-500" : "border-gray-400"}`}></hr>
+                <span className={`${isDarkMode ? "text-gray-400" : "text-gray-700"} mb-1`}>Empty Notes</span>
+
+                {
+                    SymbolsDisplay.map(({ symId, title }) => {
+                        if (recentNotes.find((note) => note.symId == symId)) return;
+
+                        return (
+                            <div
+                                onClick={async () => {
+                                    navigate(`/activeNotes/${symId}`);
+                                }}
+                                key={symId}
+                                className={`w-full flex items-center cursor-pointer hover:${isDarkMode ? 'bg-[#394e58]' : 'bg-[#e1e8eb]'
+                                    } py-2 px-3 mb-2 rounded-lg shadow ${isDarkMode ? 'bg-[#2a3942]' : 'bg-[#ffffff]'}`}
+                            >
+                                {/* Profile Picture */}
+                                <div
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center ${isDarkMode
+                                        ? 'bg-gradient-to-br from-[#3c6255] to-[#0b4f40]'
+                                        : 'bg-gradient-to-br from-[#85c496] to-[#1e5f2f]'
+                                        }`}
+                                >
+                                    <span className="text-xl font-semibold text-white">
+                                        {title[0].toUpperCase()}
+                                    </span>
+                                </div>
+
+                                {/* Note Info */}
+                                <div className="pl-2 w-20 flex-1">
+                                    <div className="flex justify-between">
+                                        <span className={`overflow-hidden whitespace-nowrap text-ellipsis font-semibold text-sm w-32 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                                            {title}
+                                        </span>
+                                    </div>
+                                    <p
+                                        className={`overflow-hidden whitespace-nowrap text-ellipsis text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                            }`}
+                                    >
+                                        {"(empty)"}
+                                    </p>
+                                </div>
+                            </div>
+                        )
+                    })
+                }
             </div>
-            <Loading text={"Sheet is getting registered..."} show={loading}></Loading>
+
         </div>
 
     );

@@ -77,7 +77,7 @@ const SymbolConfirmationMenu = () => {
                                 : "bg-gray-100 text-gray-800 border-gray-300"
                                 }`}
                         >
-                            <span className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
+                            <span title={i.symbols.join(", ")} className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
                                 {`${i.title}: `}
                                 <br />
                                 <i className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
