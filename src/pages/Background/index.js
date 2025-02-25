@@ -34,14 +34,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case 'requestedSymbolList':
-            chrome.storage.local.get(["blockedSites"]).then((val) => {
-                if (val.blockedSites?.includes(message.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
-                db.symbols.toArray((symbols) => {
-                    db.negatives.toArray((negatives) => {
-                        sendResponse({ symbols, negatives })
+            chrome.tabs.query({ active: true, currentWindow: true }, (([tab]) => {
+                chrome.storage.local.get(["blockedSites"]).then((val) => {
+                    if (val.blockedSites?.includes(tab.url.match(/^(?:https?:\/\/)?([^?#]+)/)[1])) return;
+                    db.symbols.toArray((symbols) => {
+                        db.negatives.toArray((negatives) => {
+                            sendResponse({ symbols, negatives, url: tab.url })
+                        })
                     })
                 })
-            })
+            }))
+
             return true;
 
         case 'startSyncing':

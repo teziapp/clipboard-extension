@@ -43,42 +43,20 @@ console.log(getBrightness("#ff5733")); // { brightness: 139.7, hex: "#ff5733" }
 
 
 
-export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = document.body) {
+export async function filterMatches(tokensArray, negatives, nodes) {
     const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`));
-
+    console.log(nodes)
     // Clear existing highlights if we're processing the whole document
-    if (nodeToBeTraversed === document.body) {
-        document.querySelectorAll('.levenshtineMatches').forEach((node) => {
-            node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
-        });
-    }
+    // if (nodeToBeTraversed === document.body) {
+    //     document.querySelectorAll('.levenshtineMatches').forEach((node) => {
+    //         node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
+    //     });
+    // }
 
     // Create initial tree walker and get text nodes
-    function getTextNodes(root) {
-        const walker = document.createTreeWalker(
-            root,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: function (node) {
-                    if (node.parentNode.classList?.contains('levenshtineMatches') ||
-                        ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName)) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }
-        );
-
-        const nodes = [];
-        let currentNode;
-        while (currentNode = walker.nextNode()) {
-            nodes.push(currentNode);
-        }
-        return nodes;
-    }
 
     // Process a single match within a text node
-    function createHighlightedFragment(text, match, symbol, symbolObj, nodeBgColor) {
+    function createHighlightedFragment(text, match, symbol, symbolObj) {
         const frag = document.createDocumentFragment();
         const span = document.createElement('span');
 
@@ -114,7 +92,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
     try {
 
         // Process each text node
-        let textNodes = getTextNodes(nodeToBeTraversed);
+        let textNodes = nodes;
 
         for (const node of textNodes) {
             let text = node.nodeValue;

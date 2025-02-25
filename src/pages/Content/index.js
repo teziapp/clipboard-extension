@@ -7,8 +7,9 @@ let cursorX;
 let cursorY;
 
 export let symbolsList = [];
-let negativesList
-export let observer;
+let negativesList, currentUrl
+let mainNodeLog, mutationNodeLog
+let observer;
 
 const flagButton = document.createElement('button')
 flagButton.id = 'flagButton'
@@ -70,7 +71,41 @@ document.onselectionchange = () => {
     flagButton.classList.add('hide')
 }
 
+async function getTextNodes(root) {
+    const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: function (node) {
+                if (node.parentNode.classList?.contains('levenshtineMatches') ||
+                    ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName) ||
+                    node.textContent.match(/^(?:[\n ]*|\d+|[a-zA-Z])$/)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    let currentNode;
+
+    if (root == document.body) {
+        mainNodeLog = [];
+        while (currentNode = walker.nextNode()) {
+            mainNodeLog.push(currentNode);
+        }
+        return;
+    }
+
+    while (currentNode = walker.nextNode()) {
+        mutationNodeLog.push(currentNode);
+    }
+    return;
+
+}
+
 const startObserving = () => {
+    mutationNodeLog = [];
 
     if (observer) {
         observer.disconnect()
@@ -84,9 +119,10 @@ const startObserving = () => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE && !node.classList?.contains('levenshtineMatches')) {
                         if (symbolsList.length) {
+                            getTextNodes(mutation.target)
                             clearTimeout(window.mutationDebounceId)
                             window.mutationDebounceId = setTimeout(() => {
-                                filterMatches(symbolsList, negativesList, mutation.target)
+                                filterMatches(symbolsList, negativesList, mutationNodeLog)
                             }, 100)
                         }
                     }
@@ -110,6 +146,8 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
         return;
     }
 
+    currentUrl = res.url
+
     res.symbols.forEach((symbolObj) => {
         symbolObj.symbols.forEach((symbol) => {
             symbolsList.push({ symbol, symbolObj: { symId: symbolObj.symId, color: symbolObj.color } })
@@ -117,11 +155,14 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
     })
 
     negativesList = res.negatives.filter((negative) => {
-        return negative.urls.find((url) => (window.location.href).includes(url))
+        return negative.urls.find((url) => (currentUrl).includes(url))
     })
 
     symbolsList.sort((a, b) => b.symbol.length - a.symbol.length)
-    filterMatches(symbolsList, negativesList)
+    mainNodeLog = []
+
+    getTextNodes(document.body)
+    filterMatches(symbolsList, negativesList, mainNodeLog)
     startObserving()
 
 })
