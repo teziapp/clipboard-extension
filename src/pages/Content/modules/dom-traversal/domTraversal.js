@@ -45,15 +45,6 @@ console.log(getBrightness("#ff5733")); // { brightness: 139.7, hex: "#ff5733" }
 
 export async function filterMatches(tokensArray, negatives, nodes) {
     const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`));
-    console.log(nodes)
-    // Clear existing highlights if we're processing the whole document
-    // if (nodeToBeTraversed === document.body) {
-    //     document.querySelectorAll('.levenshtineMatches').forEach((node) => {
-    //         node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
-    //     });
-    // }
-
-    // Create initial tree walker and get text nodes
 
     // Process a single match within a text node
     function createHighlightedFragment(text, match, symbol, symbolObj) {

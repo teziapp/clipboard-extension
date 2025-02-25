@@ -14,8 +14,8 @@ export const NoteSettings = () => {
     const [linkedSymbols, setLinkedSymbols] = useState([]);
     const [negativeUrls, setNegativeUrls] = useState([]);
     const [negativeUrlInput, setNegativeUrlInput] = useState("");
-    const [loading, setLoading] = useState(false)
-    const [highlightColor, setHighlightColor] = useState("#FFD0A3")
+    const [selectedColor, setSelectedColor] = useState("#FFD0A3")
+    const [favoriteColors, setFavoritecolors] = useState([])
 
     const { isDarkMode, setSymbolDataSynced, setNotificationState, setLoadingScreenState } = useSnippets()
     const navigate = useNavigate();
@@ -25,8 +25,12 @@ export const NoteSettings = () => {
             setActiveSymbol(symbol);
             setTitleInput(symbol.title);
             setLinkedSymbols(symbol.symbols);
-            setHighlightColor(symbol.color || "#FFD0A3")
+            setSelectedColor(symbol.color || "#FFD0A3")
         });
+
+        chrome.storage.local.get("favoriteColors", (val) => {
+            setFavoritecolors(val.favoriteColors || [])
+        })
     }, []);
 
     useEffect(() => {
@@ -79,17 +83,81 @@ export const NoteSettings = () => {
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"
                         }`}
                 >
-                    <label htmlFor="highlightColor" className="block mb-2 text-lg font-semibold">Highlight Color:</label>
-                    <input
-                        type="color"
-                        id="highlightColor"
-                        value={highlightColor}
-                        onChange={(e) => {
-                            console.log(highlightColor)
-                            setHighlightColor(e.target.value)
-                        }}
-                        className="w-5 h-5 cursor-pointer border-spacing-0 border-gray-300"
-                    />
+                    <label htmlFor="selectedColor" className="block mb-2 text-lg font-semibold">Highlight Color:</label>
+
+                    <div className="flex flex-col mb-2">
+                        <div className="flex flex-row items-center mb-2">
+                            <span className="mb-1">Color :</span>
+                            <span style={{ background: selectedColor }} className={`w-5 h-5 rounded-full mx-1 inline-block cursor-pointer`} onClick={() => {
+                                document.getElementById("highlight-color-selector").click();
+                                const colorWatcher = (e) => {
+                                    setSelectedColor(e.target.value)
+                                    document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                };
+                                document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                            }}></span>
+                            <span className="text-[10px] text-gray-400">{"(hover to select, click to remove)"}</span>
+                        </div>
+
+                        <div
+                            id="highlight-color-container"
+                            className="flex flex-wrap gap-3 p-2 pl-4 border rounded-lg w-full h-fit overflow-y-auto"
+                        >
+
+                            {/* Render Favorite Colors */}
+                            {favoriteColors.map((color, index) => (
+                                <span
+                                    key={index}
+                                    className={`w-6 h-6 rounded-full border hover:border-gray-500 cursor-grab`}
+                                    style={{ backgroundColor: color }}
+                                    onMouseOver={() => {
+                                        setSelectedColor(color)
+                                    }}
+                                    onClick={() => {
+                                        chrome.storage.local.get("favoriteColors", (val) => {
+                                            chrome.storage.local.set({ "favoriteColors": val.favoriteColors?.filter(i => i !== color) })
+                                        })
+                                        setFavoritecolors(p => p.filter((clr) => clr !== color))
+                                    }}
+                                >
+
+                                </span>
+                            ))}
+
+                            {/* Add New Color Button */}
+                            <span className="w-6 h-6 rounded-full">
+                                <button
+                                    className="text-center pb-1 w-full h-full font-bold text-sm bg-gray-200 rounded-md hover:bg-gray-300 transition"
+                                    onClick={
+                                        () => {
+                                            document.getElementById("highlight-color-selector").click();
+                                            const colorWatcher = (e) => {
+                                                chrome.storage.local.get("favoriteColors", (val) => {
+                                                    chrome.storage.local.set({ "favoriteColors": val.favoriteColors ? [...val.favoriteColors, e.target.value] : [e.target.value] })
+                                                })
+                                                setFavoritecolors(p => {
+                                                    return [...p, e.target.value]
+                                                })
+                                                document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                            };
+                                            document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                                        }
+                                    }
+                                >
+                                    +
+                                </button>
+                            </span>
+                            {!favoriteColors.length ? <p className="text-center text-gray-500">no favorite colors availabe!</p> : null}
+                        </div>
+
+                        <input
+                            id="highlight-color-selector"
+                            type="color"
+                            className="hidden"
+                        />
+
+                        <input id="highlight-color-selector" className="hidden" type="color"></input>
+                    </div>
                 </div>
 
 
@@ -308,7 +376,7 @@ export const NoteSettings = () => {
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
-                                color: highlightColor
+                                color: selectedColor
                             })
 
                             //Handle Negatives on Local
@@ -316,7 +384,18 @@ export const NoteSettings = () => {
 
                             navigate(`/activeNotes/${activeSymbolId}`)
 
-                            chrome.tabs.reload()
+                            chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                                chrome.tabs.sendMessage(tab.id, {
+                                    msg: 'updatedSymbol', payload: {
+                                        symbolObj: {
+                                            symId: activeSymbolId,
+                                            symbols: linkedSymbols,
+                                            color: selectedColor
+                                        }
+                                    }
+                                })
+                            })
+                            //chrome.tabs.reload()
 
                             //Update on sheet (below)
                             const remoteUpdate = await addOrUpdateNegativesToSheet(negativeUrls)
@@ -343,7 +422,7 @@ export const NoteSettings = () => {
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
-                                color: highlightColor
+                                color: selectedColor
                             })
 
                             let syncStatusForSymbol = remoteUpdatedSymbol != 'networkError' && remoteUpdatedSymbol?.response?.result.status ? 'true' : 'false'
@@ -390,7 +469,7 @@ export const NoteSettings = () => {
                         await dexieStore.deleteSymbol(activeSymbol).then((res) => {
                             res.remoteDelete?.response?.result.status ? null : setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete chat from sheet -check your connection!' })
                         })
-                        chrome.tabs.reload()
+                        //chrome.tabs.reload()
                         setLoadingScreenState({ show: false })
                         navigate('/noteList/')
                     }}

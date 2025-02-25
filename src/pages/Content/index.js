@@ -71,7 +71,20 @@ document.onselectionchange = () => {
     flagButton.classList.add('hide')
 }
 
-async function getTextNodes(root) {
+async function getTextNodes(root, currentUpdatedSymbol) {
+
+    //Clear existing highlights of a particular already highlighted symbol if we're processing the whole document and that symbol has been updated
+    if (root === document.body && currentUpdatedSymbol) {
+        document.querySelectorAll('.levenshtineMatches').forEach((node) => {
+            currentUpdatedSymbol.symbols.forEach((symbol) => {
+                const regex = new RegExp(`\\b${symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*")}\\b`, "gi");
+
+                if (!node.textContent.match(regex)) return;
+                node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
+            })
+        });
+    }
+
     const walker = document.createTreeWalker(
         root,
         NodeFilter.SHOW_TEXT,
@@ -161,10 +174,22 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
     symbolsList.sort((a, b) => b.symbol.length - a.symbol.length)
     mainNodeLog = []
 
-    getTextNodes(document.body)
-    filterMatches(symbolsList, negativesList, mainNodeLog)
-    startObserving()
+    getTextNodes(document.body).then(() => {
+        filterMatches(symbolsList, negativesList, mainNodeLog)
+        startObserving()
+    })
 
+})
+
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.msg == 'updatedSymbol') {
+        getTextNodes(document.body, message.payload.symbolObj).then(() => {
+            filterMatches([...message.payload.symbolObj.symbols.map(symbol => ({
+                symbol,
+                symbolObj: message.payload.symbolObj
+            }))], negativesList, mainNodeLog)
+        })
+    }
 })
 
 window.onkeydown = (e) => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { db, dexieStore } from "../../../Dexie/DexieStore";
-import { Search, X } from "lucide-react";
+import { Circle, Search, Trash2, X } from "lucide-react";
 import { useSnippets } from "../SnippetContext";
 import { useNavigate } from "react-router-dom";
 import { SymbolMatchNotFoundInstruction } from "./instructions/SymbolMatchNotFoundInstruction";
@@ -12,6 +12,8 @@ const SymbolConfirmationMenu = () => {
     const [searchValue, setSearchValue] = useState("");
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
+    const [favoriteColors, setFavoritecolors] = useState([])
+    const [selectedColor, setSelectedColor] = useState("#FFD0A3")
 
     const navigate = useNavigate();
 
@@ -31,6 +33,9 @@ const SymbolConfirmationMenu = () => {
     useEffect(() => {
         const status = JSON.parse(localStorage.getItem("UserInstructions")).symbolMatchNotFound
         status ? document.getElementById('symbolMatchNotFoundInstruction').showModal() : null
+        chrome.storage.local.get("favoriteColors", (val) => {
+            val.favoriteColors ? setFavoritecolors(val.favoriteColors) : null
+        })
     }, [])
 
     return (
@@ -93,9 +98,21 @@ const SymbolConfirmationMenu = () => {
                                         title: i.title,
                                         color: i.color,
                                         symbols: Array.from(new Set([...i.symbols, clickedSymbolPayload.current.clickedSymbol])),
+                                    }).then(() => {
+                                        chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                                            chrome.tabs.sendMessage(tab.id, {
+                                                msg: 'updatedSymbol', payload: {
+                                                    symbolObj: {
+                                                        symId: i.symId,
+                                                        symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                                        color: i.color
+                                                    }
+                                                }
+                                            })
+                                        })
                                     })
 
-                                    chrome.tabs.reload()
+                                    //chrome.tabs.reload()
 
                                     navigate(`/activeNotes/${i.symId}`);
 
@@ -174,11 +191,87 @@ const SymbolConfirmationMenu = () => {
                         placeholder="Enter Title"
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        className={`w-full p-2 rounded-md border-2 focus:outline-none focus:ring-2 mb-3 ${isDarkMode
+                        className={`w-full p-2 rounded-md border-2 focus:outline-none focus:ring-2 mb-2 ${isDarkMode
                             ? "bg-[#2a3942] text-gray-200 border-[#3c474d] focus:ring-[#8696a0]"
                             : "bg-white text-gray-900 border-gray-300 focus:ring-gray-200"
                             }`}
                     />
+                    <div>
+                        <div className="flex flex-col mb-2">
+                            <div className="flex flex-row items-center mb-2">
+                                <span className="mb-1">Color :</span>
+                                <span style={{ background: selectedColor }} className={`w-5 h-5 rounded-full mx-1 inline-block cursor-pointer`} onClick={() => {
+                                    document.getElementById("highlight-color-selector").click();
+                                    const colorWatcher = (e) => {
+                                        setSelectedColor(e.target.value)
+                                        document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                    };
+                                    document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                                }}></span>
+                                <span className="text-xs text-gray-400">{"(hover to select, click to remove)"}</span>
+                            </div>
+
+                            <div
+                                id="highlight-color-container"
+                                className="flex flex-wrap gap-3 p-2 pl-4 border rounded-lg w-full h-fit overflow-y-auto"
+                            >
+
+                                {/* Render Favorite Colors */}
+                                {favoriteColors.map((color, index) => (
+                                    <span
+                                        key={index}
+                                        className={`w-6 h-6 rounded-full border hover:border-gray-500 cursor-grab`}
+                                        style={{ backgroundColor: color }}
+                                        onMouseOver={() => {
+                                            setSelectedColor(color)
+                                        }}
+                                        onClick={() => {
+                                            chrome.storage.local.get("favoriteColors", (val) => {
+                                                chrome.storage.local.set({ "favoriteColors": val.favoriteColors?.filter(i => i !== color) })
+                                            })
+                                            setFavoritecolors(p => p.filter((clr) => clr !== color))
+                                        }}
+                                    >
+
+                                    </span>
+                                ))}
+
+                                {/* Add New Color Button */}
+                                <span className="w-6 h-6 rounded-full">
+                                    <button
+                                        className="text-center pb-1 w-full h-full font-bold text-sm bg-gray-200 rounded-md hover:bg-gray-300 transition"
+                                        onClick={
+                                            () => {
+                                                document.getElementById("highlight-color-selector").click();
+                                                const colorWatcher = (e) => {
+                                                    chrome.storage.local.get("favoriteColors", (val) => {
+                                                        chrome.storage.local.set({ "favoriteColors": val.favoriteColors ? [...val.favoriteColors, e.target.value] : [e.target.value] })
+                                                    })
+                                                    setFavoritecolors(p => {
+                                                        return [...p, e.target.value]
+                                                    })
+                                                    document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                                };
+                                                document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                                            }
+                                        }
+                                    >
+                                        +
+                                    </button>
+                                </span>
+                                {!favoriteColors.length ? <p className="text-center text-gray-500">no favorite colors availabe!</p> : null}
+                            </div>
+
+                            <input
+                                id="highlight-color-selector"
+                                type="color"
+                                className="hidden"
+                            />
+
+                            <input id="highlight-color-selector" className="hidden" type="color"></input>
+                        </div>
+
+                    </div>
                     <button
                         onClick={async () => {
                             if (newTitle == "") return;
@@ -190,11 +283,23 @@ const SymbolConfirmationMenu = () => {
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
-                                color: "#FFD0A3"
+                                color: selectedColor
                             };
                             const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
-                            chrome.tabs.reload()
+                            chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                                chrome.tabs.sendMessage(tab.id, {
+                                    msg: 'updatedSymbol', payload: {
+                                        symbolObj: {
+                                            symId: addedSymbol.symId,
+                                            symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                            color: selectedColor
+                                        }
+                                    }
+                                })
+                            })
+
+                            //chrome.tabs.reload()
 
                             navigate(
                                 `/activeNotes/${addedSymbol.symId}`
