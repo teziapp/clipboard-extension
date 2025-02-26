@@ -188,7 +188,7 @@ const ActiveNotes = () => {
             {/* Notes Section */}
             <div id="notes-container" className="flex-grow overflow-y-auto px-4 py-3">
                 {notes.length > 0 ? (
-                    Object.keys(groupedNotes).map((date, dateIndex) => (
+                    Object.keys(groupedNotes).map((date) => (
                         <div key={date}>
                             {/* Date Separator */}
                             <div className="flex justify-center my-3">
@@ -200,43 +200,66 @@ const ActiveNotes = () => {
                             </div>
 
                             {/* Notes */}
-                            {groupedNotes[date].map((note, noteIndex) => (
-                                <div
-                                    key={note.noteId}
-                                    className={`flex ${isDarkMode ? 'bg-[#234a40]' : 'bg-[#d0ffc7]'} rounded-lg p-3 mb-3 shadow`}
-                                >
-                                    <div className="flex-grow">
-                                        <div
-                                            className={`overflow-auto text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}
+                            {groupedNotes[date].map((note) => {
+                                if (note.colorChanged) {
+                                    return <div className="flex justify-center my-3">
+                                        <span
+                                            className={`flex flex-row items-center gap-1 text-sm text-center px-3 py-0.5 rounded-md ${isDarkMode ? 'bg-[#233239] text-gray-300' : 'bg-[#d1d7d9] text-gray-700'}`}
                                         >
-                                            {note.content}
-                                            <span className={`block text-xs w-44 whitespace-nowrap overflow-hidden text-ellipsis ${isDarkMode ? "text-gray-400" : ""}`}><a
-                                                href={note.url}
-                                                title={note.url}
-                                                target='_blank'
-                                                className='underline'>{note.url?.replace(/https?:\/\//, "") || ""}</a></span>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                            <div className='flex flex-row gap-1'>
-                                                {note.noteId == recentNoteId ? <CheckCheck size={18} strokeWidth={syncProps.strokeWidth} color={syncProps.color}></CheckCheck> :
-                                                    <CheckCheck size={18} strokeWidth={note.synced == 'true' ? 2 : 1} color={note.synced == 'true' ? "#239ed0" : "#A0A0A0"}></CheckCheck>}
-                                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                    {new Date(note.date + 5.5 * 60 * 60 * 1000).toISOString().split('T')[1].substring(0, 5)}
-                                                </span>
-                                            </div>
-                                            <button
-                                                className={`text-gray-400 hover:text-red-500`}
-                                                onClick={() => deleteNote(note)}
-                                                aria-label="Delete note"
+                                            <span
+                                                className={`w-4 h-4 rounded-full inline-block `}
+                                                style={{ backgroundColor: note.colorChanged[0] }}
                                             >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            </span>
+                                            <span className='mb-1'>{"=>"}</span>
+                                            <span
+                                                className={`w-4 h-4 rounded-full inline-block `}
+                                                style={{ backgroundColor: note.colorChanged[1] }}
+                                            >
+                                            </span>
+                                        </span>
+                                    </div>
+                                }
 
+                                return (
+                                    <div
+                                        key={note.noteId}
+                                        className={`flex ${isDarkMode ? 'bg-[#234a40]' : 'bg-[#d0ffc7]'} rounded-lg p-3 mb-3 shadow`}
+                                    >
+                                        <div className="flex-grow">
+                                            <div
+                                                className={`overflow-auto whitespace-pre-wrap text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}
+                                            >
+                                                {note.content}
+                                                <span className={`block text-xs w-44 whitespace-nowrap overflow-hidden text-ellipsis ${isDarkMode ? "text-gray-400" : ""}`}><a
+                                                    href={note.url}
+                                                    title={note.url}
+                                                    target='_blank'
+                                                    className='underline'>{note.url?.replace(/https?:\/\//, "") || ""}</a></span>
+                                            </div>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <div className='flex flex-row gap-1'>
+                                                    {note.noteId == recentNoteId ? <CheckCheck size={18} strokeWidth={syncProps.strokeWidth} color={syncProps.color}></CheckCheck> :
+                                                        <CheckCheck size={18} strokeWidth={note.synced == 'true' ? 2 : 1} color={note.synced == 'true' ? "#239ed0" : "#A0A0A0"}></CheckCheck>}
+                                                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        {new Date(note.date + 5.5 * 60 * 60 * 1000).toISOString().split('T')[1].substring(0, 5)}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    className={`text-gray-400 hover:text-red-500`}
+                                                    onClick={() => deleteNote(note)}
+                                                    aria-label="Delete note"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                            ))}
+                                )
+                            }
+                            )}
                         </div>
                     ))
                 ) : (

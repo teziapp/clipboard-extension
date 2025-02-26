@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db, dexieStore } from "../../Dexie/DexieStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useSnippets } from "./SnippetContext";
 import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../Dexie/utils/sheetSyncHandlers";
+import cuid from "cuid";
 
 export const NoteSettings = () => {
     const activeSymbolId = parseInt(useParams().activeSymbolId);
@@ -16,6 +17,8 @@ export const NoteSettings = () => {
     const [selectedColor, setSelectedColor] = useState("#FFD0A3")
     const [favoriteColors, setFavoritecolors] = useState([])
 
+    const colorReference = useRef("")
+
     const { isDarkMode, setSymbolDataSynced, setNotificationState, setLoadingScreenState } = useSnippets()
     const navigate = useNavigate();
 
@@ -25,6 +28,7 @@ export const NoteSettings = () => {
             setTitleInput(symbol.title);
             setLinkedSymbols(symbol.symbols);
             setSelectedColor(symbol.color || "#FFD0A3")
+            colorReference.current = symbol.color || "#FFD0A3"
         });
 
         chrome.storage.local.get("favoriteColors", (val) => {
@@ -381,6 +385,16 @@ export const NoteSettings = () => {
                             //Handle Negatives on Local
                             await dexieStore.updateNegatives(negativeUrls)
 
+                            //log the saved details in form of chatNote
+                            if (colorReference.current !== selectedColor) {
+                                dexieStore.addNote({
+                                    symId: activeSymbolId,
+                                    noteId: cuid(),
+                                    date: Date.now(),
+                                    colorChanged: [colorReference.current, selectedColor]
+                                })
+                            }
+
                             navigate(`/activeNotes/${activeSymbolId}`)
 
                             chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
@@ -394,6 +408,8 @@ export const NoteSettings = () => {
                                     }
                                 })
                             })
+
+
                             //chrome.tabs.reload()
 
                             //Update on sheet (below)
