@@ -27,7 +27,6 @@ const Settings = () => {
   const [importError, setImportError] = useState(null);
   const [sheetUrlInput, setSheetUrlInput] = useState("")
   const [blockedSitesDisplay, setBlockedSitesDisplay] = useState([])
-  const [loading, setLoading] = useState(false)
 
   const location = useLocation()
 
@@ -155,6 +154,8 @@ const Settings = () => {
 
   }
 
+  let justClickedLoadNse = false;
+
   return (
     <div className={`p-4 h-full flex flex-col overflow-y-auto ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
       <div className="flex items-center mb-4">
@@ -191,8 +192,20 @@ const Settings = () => {
         <label>
           <button className=" text-blue-500 hover:text-blue-600 cursor-pointer hover:bg-gray-200 rounded-md"
             onClick={() => {
-              dexieStore.loadNseSymbols().then(() => {
-                setNotificationState({ show: true, type: 'success', text: 'NSE symbols loaded!', duration: 3000 })
+              if (justClickedLoadNse) return;
+              justClickedLoadNse = true; //using this variable instead of a debouncer
+
+              chrome.storage.local.get("loadedNseStatus", (val) => {
+                if (val.loadedNseStatus === 'true') {
+                  justClickedLoadNse = false;
+                  return setNotificationState({ show: true, type: 'success', text: 'NSE symbols are already loaded!', duration: 3000 })
+                }
+                dexieStore.loadNseSymbols().then(() => {
+                  chrome.storage.local.set({ "loadedNseStatus": 'true' }, () => {
+                    justClickedLoadNse = false
+                    setNotificationState({ show: true, type: 'success', text: 'NSE symbols loaded!', duration: 3000 })
+                  })
+                })
               })
             }}>
             <Download></Download>
@@ -204,8 +217,12 @@ const Settings = () => {
         <label>
           <button className="text-blue-500 hover:text-blue-600 cursor-pointer hover:bg-gray-200 rounded-md"
             onClick={() => {
-              dexieStore.deleteNseSymbol().then(() => {
-                setNotificationState({ show: true, type: 'success', text: 'NSE symbols deleted!', duration: 3000 })
+              chrome.storage.local.get("loadedNseStatus", (val) => {
+                if (val.loadedNseStatus == 'false') return;
+                dexieStore.deleteNseSymbol().then(() => {
+                  chrome.storage.local.set({ "loadedNseStatus": 'false' })
+                  setNotificationState({ show: true, type: 'success', text: 'NSE symbols deleted!', duration: 3000 })
+                })
               })
             }}>
             <Trash2Icon></Trash2Icon>
@@ -369,14 +386,12 @@ const Settings = () => {
               await loadUnsynced().then((res1) => {
                 if (!res1 || res1 == 'networkError') {
                   setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
-                  setLoading(false)
                   return
                 }
 
                 deleteUnsynced().then((res2) => {
                   if (!res2 || res2 == 'networkError') {
                     setNotificationState({ show: true, type: 'failure', text: "something went wrong while backing up \n- your connection is poor OR your sheet is not registered!" })
-                    setLoading(false)
                     return
                   }
                   setLoadingScreenState({ show: false })

@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCheck, Drum, Plus, RefreshCcw, Settings, Trash2 } from 'lucide-react';
+import { ArrowBigRight, ArrowBigRightDashIcon, ArrowLeft, CheckCheck, Drum, Plus, RefreshCcw, Settings, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSnippets } from './SnippetContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -211,7 +211,7 @@ const ActiveNotes = () => {
                                                 style={{ backgroundColor: note.colorChanged[0] }}
                                             >
                                             </span>
-                                            <span className='mb-1'>{"=>"}</span>
+                                            <span className=''><ArrowBigRight size={25} strokeWidth={1}></ArrowBigRight></span>
                                             <span
                                                 className={`w-4 h-4 rounded-full inline-block `}
                                                 style={{ backgroundColor: note.colorChanged[1] }}
