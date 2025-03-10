@@ -13,8 +13,8 @@ db.version(1).stores({
 })
 
 db.on("populate", function (transaction) {
-    transaction.symbols.add({ symId: 1000000, title: "Quick Notes", type: 'normal', symbols: [] }).then((id) => {
-        transaction.notes.add({ noteId: 'sample', symId: id, content: 'Ctrl + ⬇ (down arrow-key) to open this chat & dump all your quick note/references!', date: Date.now(), synced: 'true' })
+    transaction.symbols.add({ symId: 1000000, title: "Quick Notes", type: 'normal', symbols: [], synced: 'false' }).then((id) => {
+        transaction.notes.add({ noteId: 'sample', symId: id, content: 'Ctrl + ⬇ (down arrow-key) to open this chat & dump all your quick note/references!', date: Date.now(), synced: 'false' })
     });
 });
 
@@ -146,7 +146,7 @@ export const dexieStore = {
     },
 
     populateLocal: async () => {
-        const { notesArrayResult, symbolsArrayResult, negativesArrayResult } = await populateLocalFromSheet()
+        const { notesArrayResult, symbolsArrayResult, negativesArrayResult } = await populateLocalFromSheet() || {}
 
         if (notesArrayResult?.response?.result.status && symbolsArrayResult?.response?.result.status && negativesArrayResult?.response?.result.status) {
             await db.notes.clear()

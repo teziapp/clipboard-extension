@@ -1,7 +1,10 @@
 import React from "react";
+import { useSnippets } from "../SnippetContext";
 
-export const Loading = ({ show, text }) => {
-    if (!show) return null;
+export const Loading = () => {
+    const { loadingScreenState } = useSnippets()
+
+    if (!loadingScreenState.show) return null;
 
     return (
         <div
@@ -10,7 +13,7 @@ export const Loading = ({ show, text }) => {
         >
             <div className="flex items-center gap-2">
                 <div className="loader animate-spin rounded-full border-4 border-t-4 border-gray-300 border-t-green-500 w-9 h-9"></div>
-                <span className="text-white text-lg">{text || "Loading..."}</span>
+                <span className="text-white text-lg">{loadingScreenState.text || "Loading..."}</span>
             </div>
         </div>
     );

@@ -7,15 +7,22 @@ import { X } from "lucide-react";
 import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../../Dexie/utils/sheetSyncHandlers";
 
 export const SymbolConflictMenu = () => {
-    const { isDarkMode, clickedSymbolPayload, setSymbolDataSynced } = useSnippets();
+    const { isDarkMode, clickedSymbolPayload, setSymbolDataSynced, setNotificationState } = useSnippets();
 
     const [symbolDisplay, setSymbolDisplay] = useState([]);
     const [newTitle, setNewTitle] = useState("");
+    const [selectedColor, setSelectedColor] = useState("#FFD0A3")
+    const [favoriteColors, setFavoritecolors] = useState([])
+
 
     const navigate = useNavigate();
 
     useEffect(() => {
         setSymbolDisplay(clickedSymbolPayload.current.exactMatches)
+
+        chrome.storage.local.get("favoriteColors", (val) => {
+            setFavoritecolors(val.favoriteColors || [])
+        })
     }, [])
 
     return (
@@ -99,7 +106,16 @@ export const SymbolConflictMenu = () => {
 
                                     await dexieStore.updateNegatives(toBeUpdatedNegatives)
 
-                                    chrome.tabs.reload()
+                                    // chrome.tabs.reload()
+                                    setNotificationState({
+                                        show: true,
+                                        type: 'success',
+                                        text: "you will need to refresh the webpage to reflect this change on the page!",
+                                        action: "Refresh", doAction: () => {
+                                            chrome.tabs.reload()
+                                        },
+                                        duration: 4000
+                                    })
 
                                     navigate(`/activeNotes/${i.symId}`);
 
@@ -140,7 +156,9 @@ export const SymbolConflictMenu = () => {
                         <span
                             className={`font-bold cursor-pointer ${isDarkMode ? 'text-[#00a884] hover:text-[#009172]' : 'text-blue-500 hover:text-blue-400'}`}
                             onClick={() => {
+                                setNewTitle(clickedSymbolPayload.current.clickedSymbol)
                                 document.getElementById("symbolConfimationDialogue").showModal();
+                                document.getElementById("newSymbolTitleInput").focus()
                             }}>
                             create new from here
                         </span>
@@ -190,6 +208,81 @@ export const SymbolConflictMenu = () => {
                             : "bg-white text-gray-900 border-gray-300 focus:ring-gray-200"
                             }`}
                     />
+
+                    <div className="flex flex-col mb-2">
+                        <div className="flex flex-row items-center mb-2">
+                            <span className="mb-1">Color :</span>
+                            <span style={{ background: selectedColor }} className={`w-5 h-5 rounded-full mx-1 inline-block cursor-pointer`} onClick={() => {
+                                document.getElementById("highlight-color-selector").click();
+                                const colorWatcher = (e) => {
+                                    setSelectedColor(e.target.value)
+                                    document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                };
+                                document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                            }}></span>
+                            <span className="text-xs text-gray-400">{"(hover to select, click to remove)"}</span>
+                        </div>
+
+                        <div
+                            id="highlight-color-container"
+                            className="flex flex-wrap gap-3 p-2 pl-4 border rounded-lg w-full h-fit overflow-y-auto"
+                        >
+
+                            {/* Render Favorite Colors */}
+                            {favoriteColors.map((color, index) => (
+                                <span
+                                    key={index}
+                                    className={`w-6 h-6 rounded-full border hover:border-gray-500 cursor-grab`}
+                                    style={{ backgroundColor: color }}
+                                    onMouseOver={() => {
+                                        setSelectedColor(color)
+                                    }}
+                                    onClick={() => {
+                                        chrome.storage.local.get("favoriteColors", (val) => {
+                                            chrome.storage.local.set({ "favoriteColors": val.favoriteColors?.filter(i => i !== color) })
+                                        })
+                                        setFavoritecolors(p => p.filter((clr) => clr !== color))
+                                    }}
+                                >
+
+                                </span>
+                            ))}
+
+                            {/* Add New Color Button */}
+                            <span className="w-6 h-6 rounded-full">
+                                <button
+                                    className={`text-center pb-1 w-full h-full font-bold text-sm ${isDarkMode ? 'bg-gray-500' : 'bg-gray-200'}  rounded-md hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} transition`}
+                                    onClick={
+                                        () => {
+                                            document.getElementById("highlight-color-selector").click();
+                                            const colorWatcher = (e) => {
+                                                chrome.storage.local.get("favoriteColors", (val) => {
+                                                    chrome.storage.local.set({ "favoriteColors": val.favoriteColors ? [...val.favoriteColors, e.target.value] : [e.target.value] })
+                                                })
+                                                setFavoritecolors(p => {
+                                                    return [...p, e.target.value]
+                                                })
+                                                document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                            };
+                                            document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                                        }
+                                    }
+                                >
+                                    +
+                                </button>
+                            </span>
+                            {!favoriteColors.length ? <p className="text-center text-gray-500">no favorite colors availabe!</p> : null}
+                        </div>
+
+                        <input
+                            id="highlight-color-selector"
+                            type="color"
+                            className="hidden"
+                        />
+
+                        <input id="highlight-color-selector" className="hidden" type="color"></input>
+                    </div>
+
                     <button
                         onClick={async () => {
                             if (newTitle == "") return;
@@ -224,11 +317,31 @@ export const SymbolConflictMenu = () => {
                             const symbolToBeAdded = {
                                 title: newTitle,
                                 symbols: [clickedSymbolPayload.current.clickedSymbol],
-                                color: "#FFD0A3"
+                                color: selectedColor
                             };
                             const addedSymbol = await dexieStore.addNewSymbol(symbolToBeAdded)
 
-                            chrome.tabs.reload()
+                            chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                                chrome.tabs.sendMessage(tab.id, {
+                                    msg: 'updatedSymbol', payload: {
+                                        symbolObj: {
+                                            symId: addedSymbol.symId,
+                                            symbols: [clickedSymbolPayload.current.clickedSymbol],
+                                            color: selectedColor
+                                        }
+                                    }
+                                })
+                            })
+
+                            setNotificationState({
+                                show: true,
+                                type: 'success',
+                                text: "you will need to refresh the webpage to reflect this change on the page!",
+                                action: "Refresh", doAction: () => {
+                                    chrome.tabs.reload()
+                                },
+                                duration: 4000
+                            })
 
                             navigate(
                                 `/activeNotes/${addedSymbol.symId}`

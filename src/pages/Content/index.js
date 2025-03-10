@@ -7,8 +7,9 @@ let cursorX;
 let cursorY;
 
 export let symbolsList = [];
-let negativesList
-export let observer;
+let negativesList, currentUrl
+let mainNodeLog, mutationNodeLog
+let observer;
 
 const flagButton = document.createElement('button')
 flagButton.id = 'flagButton'
@@ -34,8 +35,7 @@ const onClickHandler = (e) => {
     console.log(clickedSymbol, " has been clicked")
     chrome.runtime.sendMessage({
         msg: 'clickedSymbol', payload: {
-            clickedSymbol,
-            url: `${window.location.href}`
+            clickedSymbol
         }
     })
 }
@@ -71,7 +71,54 @@ document.onselectionchange = () => {
     flagButton.classList.add('hide')
 }
 
+async function getTextNodes(root, currentUpdatedSymbol) {
+
+    //Clear existing highlights of a particular already highlighted symbol if we're processing the whole document and that symbol has been updated
+    if (root === document.body && currentUpdatedSymbol) {
+        document.querySelectorAll('.levenshtineMatches').forEach((node) => {
+            currentUpdatedSymbol.symbols.forEach((symbol) => {
+                const regex = new RegExp(`\\b${symbol.replace(/[\s.\-]+/g, "[\\s.\\-]*")}\\b`, "gi");
+
+                if (!node.textContent.match(regex)) return;
+                node.parentNode?.replaceChild(document.createTextNode(node.textContent), node);
+            })
+        });
+    }
+
+    const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: function (node) {
+                if (node.parentNode.classList?.contains('levenshtineMatches') ||
+                    ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName) ||
+                    node.textContent.match(/^(?:[\n ]*|\d+|[a-zA-Z])$/)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    let currentNode;
+
+    if (root == document.body) {
+        mainNodeLog = [];
+        while (currentNode = walker.nextNode()) {
+            mainNodeLog.push(currentNode);
+        }
+        return;
+    }
+
+    while (currentNode = walker.nextNode()) {
+        mutationNodeLog.push(currentNode);
+    }
+    return;
+
+}
+
 const startObserving = () => {
+    mutationNodeLog = [];
 
     if (observer) {
         observer.disconnect()
@@ -85,9 +132,10 @@ const startObserving = () => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE && !node.classList?.contains('levenshtineMatches')) {
                         if (symbolsList.length) {
+                            getTextNodes(mutation.target)
                             clearTimeout(window.mutationDebounceId)
                             window.mutationDebounceId = setTimeout(() => {
-                                filterMatches(symbolsList, negativesList, mutation.target)
+                                filterMatches(symbolsList, negativesList, mutationNodeLog)
                             }, 100)
                         }
                     }
@@ -105,11 +153,13 @@ const startObserving = () => {
 }
 
 
-chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.href }, (res) => {
+chrome.runtime.sendMessage({ msg: 'requestedSymbolList' }, (res) => {
     if (!res?.symbols?.length) {
         console.log("Didn't recieve symbols")
         return;
     }
+
+    currentUrl = res.url
 
     res.symbols.forEach((symbolObj) => {
         symbolObj.symbols.forEach((symbol) => {
@@ -118,23 +168,35 @@ chrome.runtime.sendMessage({ msg: 'requestedSymbolList', url: window.location.hr
     })
 
     negativesList = res.negatives.filter((negative) => {
-        return negative.urls.find((url) => (window.location.href).includes(url))
+        return negative.urls.find((url) => (currentUrl).includes(url))
     })
 
     symbolsList.sort((a, b) => b.symbol.length - a.symbol.length)
-    filterMatches(symbolsList, negativesList)
-    startObserving()
+    mainNodeLog = []
+
+    getTextNodes(document.body).then(() => {
+        filterMatches(symbolsList, negativesList, mainNodeLog)
+        startObserving()
+    })
 
 })
 
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.msg == 'updatedSymbol') {
+        getTextNodes(document.body, message.payload.symbolObj).then(() => {
+            filterMatches([...message.payload.symbolObj.symbols.map(symbol => ({
+                symbol,
+                symbolObj: message.payload.symbolObj
+            }))], negativesList, mainNodeLog)
+        })
+    }
+})
+
 window.onkeydown = (e) => {
-    console.log('dwn')
     console.log(e.key)
     if (e.ctrlKey && !ctrlKeyPressed) {
-        console.log('ctrl')
         ctrlKeyPressed = true
     } else if (e.key == "ArrowDown") {
-        console.log('sending')
         ctrlKeyPressed ? chrome.runtime.sendMessage({ msg: 'openQuickNotes' }) : null
     }
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db, dexieStore } from "../../Dexie/DexieStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useSnippets } from "./SnippetContext";
-import { Loading } from "./utils/Loading";
 import { addOrUpdateNegativesToSheet, addOrUpdateSymbolToSheet } from "../../Dexie/utils/sheetSyncHandlers";
+import cuid from "cuid";
 
 export const NoteSettings = () => {
     const activeSymbolId = parseInt(useParams().activeSymbolId);
@@ -14,10 +14,12 @@ export const NoteSettings = () => {
     const [linkedSymbols, setLinkedSymbols] = useState([]);
     const [negativeUrls, setNegativeUrls] = useState([]);
     const [negativeUrlInput, setNegativeUrlInput] = useState("");
-    const [loading, setLoading] = useState(false)
-    const [highlightColor, setHighlightColor] = useState("#FFD0A3")
+    const [selectedColor, setSelectedColor] = useState("#FFD0A3")
+    const [favoriteColors, setFavoritecolors] = useState([])
 
-    const { isDarkMode, setSymbolDataSynced, setNotificationState } = useSnippets()
+    const colorReference = useRef("")
+
+    const { isDarkMode, setSymbolDataSynced, setNotificationState, setLoadingScreenState } = useSnippets()
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -25,8 +27,13 @@ export const NoteSettings = () => {
             setActiveSymbol(symbol);
             setTitleInput(symbol.title);
             setLinkedSymbols(symbol.symbols);
-            setHighlightColor(symbol.color || "#FFD0A3")
+            setSelectedColor(symbol.color || "#FFD0A3")
+            colorReference.current = symbol.color || "#FFD0A3"
         });
+
+        chrome.storage.local.get("favoriteColors", (val) => {
+            setFavoritecolors(val.favoriteColors || [])
+        })
     }, []);
 
     useEffect(() => {
@@ -43,7 +50,7 @@ export const NoteSettings = () => {
 
     return (
         <div
-            className={` w-full h-full flex flex-col py-2 ${isDarkMode ? "bg-gray-900 text-gray-300" : "bg-white text-gray-800"
+            className={` w-full h-full flex flex-col ${isDarkMode ? "bg-gray-900 text-gray-300" : "bg-white text-gray-800"
                 }`}
         >
             {/* Header */}
@@ -56,7 +63,7 @@ export const NoteSettings = () => {
                 />
                 <span className="px-4 font-semibold text-2xl">Settings</span>
             </div>
-            <div className="p-3 pb-2 w-full h-full overflow-y-scroll">
+            <div className="p-3 pb-0 w-full h-full overflow-y-scroll">
                 {/* Title Section */}
                 <div
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"
@@ -79,17 +86,81 @@ export const NoteSettings = () => {
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"
                         }`}
                 >
-                    <label htmlFor="highlightColor" className="block mb-2 text-lg font-semibold">Highlight Color:</label>
-                    <input
-                        type="color"
-                        id="highlightColor"
-                        value={highlightColor}
-                        onChange={(e) => {
-                            console.log(highlightColor)
-                            setHighlightColor(e.target.value)
-                        }}
-                        className="w-5 h-5 cursor-pointer border-spacing-0 border-gray-300"
-                    />
+                    <label htmlFor="selectedColor" className="block mb-2 text-lg font-semibold">Highlight Color:</label>
+
+                    <div className="flex flex-col mb-2">
+                        <div className="flex flex-row items-center mb-2">
+                            <span className="mb-1">Color :</span>
+                            <span style={{ background: selectedColor }} className={`w-5 h-5 rounded-full mx-1 inline-block cursor-pointer`} onClick={() => {
+                                document.getElementById("highlight-color-selector").click();
+                                const colorWatcher = (e) => {
+                                    setSelectedColor(e.target.value)
+                                    document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                };
+                                document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                            }}></span>
+                            <span className="text-[10px] text-gray-400">{"(hover to select, click to remove)"}</span>
+                        </div>
+
+                        <div
+                            id="highlight-color-container"
+                            className="flex flex-wrap gap-3 p-2 pl-6 border rounded-lg w-full h-fit overflow-y-auto"
+                        >
+
+                            {/* Render Favorite Colors */}
+                            {favoriteColors.map((color, index) => (
+                                <span
+                                    key={index}
+                                    className={`w-6 h-6 rounded-full border hover:border-gray-500 cursor-grab`}
+                                    style={{ backgroundColor: color }}
+                                    onMouseOver={() => {
+                                        setSelectedColor(color)
+                                    }}
+                                    onClick={() => {
+                                        chrome.storage.local.get("favoriteColors", (val) => {
+                                            chrome.storage.local.set({ "favoriteColors": val.favoriteColors?.filter(i => i !== color) })
+                                        })
+                                        setFavoritecolors(p => p.filter((clr) => clr !== color))
+                                    }}
+                                >
+
+                                </span>
+                            ))}
+
+                            {/* Add New Color Button */}
+                            <span className="w-6 h-6 rounded-full">
+                                <button
+                                    className={`text-center pb-1 w-full h-full font-bold text-sm ${isDarkMode ? 'bg-gray-500' : 'bg-gray-200'}  rounded-md hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} transition`}
+                                    onClick={
+                                        () => {
+                                            document.getElementById("highlight-color-selector").click();
+                                            const colorWatcher = (e) => {
+                                                chrome.storage.local.get("favoriteColors", (val) => {
+                                                    chrome.storage.local.set({ "favoriteColors": val.favoriteColors ? [...val.favoriteColors, e.target.value] : [e.target.value] })
+                                                })
+                                                setFavoritecolors(p => {
+                                                    return [...p, e.target.value]
+                                                })
+                                                document.getElementById("highlight-color-selector").removeEventListener('change', colorWatcher);
+                                            };
+                                            document.getElementById("highlight-color-selector").addEventListener('change', colorWatcher);
+                                        }
+                                    }
+                                >
+                                    +
+                                </button>
+                            </span>
+                            {!favoriteColors.length ? <p className="text-center text-gray-500">no favorite colors availabe!</p> : null}
+                        </div>
+
+                        <input
+                            id="highlight-color-selector"
+                            type="color"
+                            className="hidden"
+                        />
+
+                        <input id="highlight-color-selector" className="hidden" type="color"></input>
+                    </div>
                 </div>
 
 
@@ -147,7 +218,7 @@ export const NoteSettings = () => {
                     </div>
                 </div>
 
-                {/* negative URLs Section */}
+
                 {/* Negative URLs Section */}
                 <div
                     className={`mb-4 p-4 rounded-md ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}
@@ -289,7 +360,7 @@ export const NoteSettings = () => {
                 </div>
 
 
-                <div className="flex flex-row justify-around mt-4">
+                <div className="sticky bottom-0 w-full backdrop-blur-lg shadow-lg flex justify-around items-center py-4">
                     <button
                         className={`mt-3 px-3 py-2 text-white rounded-md font-semibold ${isDarkMode
                             ? "bg-green-500 hover:bg-green-400"
@@ -308,15 +379,38 @@ export const NoteSettings = () => {
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
-                                color: highlightColor
+                                color: selectedColor
                             })
 
                             //Handle Negatives on Local
                             await dexieStore.updateNegatives(negativeUrls)
 
+                            //log the saved details in form of chatNote
+                            if (colorReference.current !== selectedColor) {
+                                dexieStore.addNote({
+                                    symId: activeSymbolId,
+                                    noteId: cuid(),
+                                    date: Date.now(),
+                                    colorChanged: [colorReference.current, selectedColor]
+                                })
+                            }
+
                             navigate(`/activeNotes/${activeSymbolId}`)
 
-                            chrome.tabs.reload()
+                            chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                                chrome.tabs.sendMessage(tab.id, {
+                                    msg: 'updatedSymbol', payload: {
+                                        symbolObj: {
+                                            symId: activeSymbolId,
+                                            symbols: linkedSymbols,
+                                            color: selectedColor
+                                        }
+                                    }
+                                })
+                            })
+
+
+                            //chrome.tabs.reload()
 
                             //Update on sheet (below)
                             const remoteUpdate = await addOrUpdateNegativesToSheet(negativeUrls)
@@ -343,7 +437,7 @@ export const NoteSettings = () => {
                                 symId: activeSymbolId,
                                 title: titleInput,
                                 symbols: linkedSymbols,
-                                color: highlightColor
+                                color: selectedColor
                             })
 
                             let syncStatusForSymbol = remoteUpdatedSymbol != 'networkError' && remoteUpdatedSymbol?.response?.result.status ? 'true' : 'false'
@@ -386,12 +480,14 @@ export const NoteSettings = () => {
                     </button>
                     <button onClick={async () => {
                         document.getElementById("deleteConfirmationDialogue").close()
-                        setLoading(true)
+                        setLoadingScreenState({ show: true })
                         await dexieStore.deleteSymbol(activeSymbol).then((res) => {
+                            if (!res.remoteDelete) return
                             res.remoteDelete?.response?.result.status ? null : setNotificationState({ show: true, type: 'failure', text: 'Un-able to delete chat from sheet -check your connection!' })
                         })
-                        chrome.tabs.reload()
-                        setLoading(false)
+                        //chrome.tabs.reload()
+
+                        setLoadingScreenState({ show: false })
                         navigate('/noteList/')
                     }}
                         className="bg-red-500 hover:bg-red-400 mt-3 px-3 py-2 text-white rounded-md font-semibold">
@@ -400,7 +496,6 @@ export const NoteSettings = () => {
                 </div>
             </dialog>
 
-            <Loading show={loading}></Loading>
         </div>
     );
 

@@ -1,43 +1,58 @@
-export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = document.body) {
-    const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`));
+function getActualBackgroundColor(element) {
+    while (element) {
+        const bgColor = window.getComputedStyle(element).backgroundColor;
 
-    // Clear existing highlights if we're processing the whole document
-    if (nodeToBeTraversed === document.body) {
-        document.querySelectorAll('.levenshtineMatches').forEach((node) => {
-            node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
-        });
-    }
-
-    // Create initial tree walker and get text nodes
-    function getTextNodes(root) {
-        const walker = document.createTreeWalker(
-            root,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: function (node) {
-                    if (node.parentNode.classList?.contains('levenshtineMatches') ||
-                        ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT'].includes(node.parentNode.tagName)) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }
-        );
-
-        const nodes = [];
-        let currentNode;
-        while (currentNode = walker.nextNode()) {
-            nodes.push(currentNode);
+        // Check if it's a valid, non-transparent color
+        if (bgColor && bgColor !== "rgba(0, 0, 0, 0)" && bgColor !== "transparent") {
+            return bgColor;
         }
-        return nodes;
+
+        element = element.parentElement; // Move to parent
     }
+    return "white"; // Default background
+}
+
+function getBrightness(hex) {
+    let { r, g, b } = hexToRGB(hex);
+    let brightness = Math.sqrt(
+        r * r * 0.241 +
+        g * g * 0.691 +
+        b * b * 0.068
+    );
+    return { brightness, hex: rgbToHex(r, g, b) };
+}
+
+// Helper function to convert HEX to RGB
+function hexToRGB(hex) {
+    hex = hex.replace(/^#/, "");
+    let bigint = parseInt(hex, 16);
+    return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+    };
+}
+
+// Helper function to convert RGB back to HEX
+function rgbToHex(r, g, b) {
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+// Example usage:
+console.log(getBrightness("#ff5733")); // { brightness: 139.7, hex: "#ff5733" }
+
+
+
+export async function filterMatches(tokensArray, negatives, nodes) {
+    const negSet = new Set(negatives.map((neg) => `${neg.symId}:${neg.symbol}`));
 
     // Process a single match within a text node
     function createHighlightedFragment(text, match, symbol, symbolObj) {
         const frag = document.createDocumentFragment();
         const span = document.createElement('span');
 
-        span.style.background = symbolObj.color || 'orange';
+        span.style.background = symbolObj.color || '#FFD0A3'
+        span.style.color = getBrightness(symbolObj.color || '#FFD0A3') < 130 ? 'white' : 'black';
         span.className = 'levenshtineMatches';
         span.innerHTML = match;
 
@@ -55,8 +70,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                 chrome.runtime.sendMessage({
                     msg: 'clickedSymbol',
                     payload: {
-                        clickedSymbol: symbol,
-                        url: `${window.location.href}`
+                        clickedSymbol: symbol
                     }
                 });
             };
@@ -69,11 +83,13 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
     try {
 
         // Process each text node
-        let textNodes = getTextNodes(nodeToBeTraversed);
+        let textNodes = nodes;
 
         for (const node of textNodes) {
             let text = node.nodeValue;
             let matches = [];
+
+            //let nodeBgColor = getActualBackgroundColor(node.parentElement);
 
             // Find all matches for all symbols in this text node
             for (const { symbol, symbolObj } of tokensArray) {
@@ -87,6 +103,7 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                 while ((match = regex.exec(text)) !== null) {
                     const existingMatch = matches.find((existingMatch) => existingMatch.symbolObj.symId == symbolObj.symId)
                     if (existingMatch?.index < match?.index && existingMatch?.text.length > match?.index) continue;
+
                     matches.push({
                         index: match.index,
                         length: match[0].length,
@@ -119,7 +136,8 @@ export async function filterMatches(tokensArray, negatives, nodeToBeTraversed = 
                         text,
                         match.text,
                         match.symbol,
-                        match.symbolObj
+                        match.symbolObj,
+                        match.nodeBgColor
                     );
                     highlightSpan.textContent = match.text;
                     frag.appendChild(highlightSpan);
